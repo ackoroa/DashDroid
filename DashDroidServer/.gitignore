@@ -1,0 +1,16 @@
+# Java class files
+*.class
+
+# generated files
+bin/
+target/
+
+# Windows thumbnail db
+Thumbs.db
+
+# OSX files
+.DS_Store
+
+# Eclipse project files
+.classpath
+.project
