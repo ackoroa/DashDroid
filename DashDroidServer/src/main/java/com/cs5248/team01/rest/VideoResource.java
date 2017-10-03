@@ -1,7 +1,6 @@
 package com.cs5248.team01.rest;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
+import java.io.InputStream;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -13,24 +12,43 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 
-import com.cs5248.team01.model.SimpleVideoMeta;
+import org.apache.log4j.Logger;
+
+import com.cs5248.team01.model.JsonResponse;
+import com.cs5248.team01.model.Video;
 
 @Path("video")
 public class VideoResource {
 	
-
-	@POST
+	final static Logger logger = Logger.getLogger(VideoResource.class.getSimpleName());
+	
+	@GET
 	@Path("new")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response newVideo(String data) {
-		return null;
+	public JsonResponse newVideo(String data) {
+		try {
+			return JsonResponse.createResponse(Video.newVideo(""));
+		}
+		catch(Exception e) {
+			return JsonResponse.failedResponse(e.getMessage());
+		}
 	}
 	
 	@POST
 	@Path("{videoId}/{sequenceNum}/upload")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response uploadSegment(@PathParam("videoId") String videoId, @PathParam("sequenceNum") String sequenceNum, String data) {
-		return null;
+	@Consumes(MediaType.APPLICATION_OCTET_STREAM)
+	public JsonResponse uploadSegment(@PathParam("videoId") String videoId, @PathParam("sequenceNum") String sequenceNum, InputStream payload) {
+		try {
+			Video video = Video.getById(Integer.parseInt(videoId));
+			//video.addVideoSegment(Integer.parseInt(sequenceNum), payload);
+				    //for testing
+			return JsonResponse.createResponse(payload.available());
+		}
+		catch(Exception e) {
+			return JsonResponse.failedResponse(e.getMessage());
+		}
+
 	}
 	
 //	@GET
@@ -43,19 +61,28 @@ public class VideoResource {
 	@POST
 	@Path("{videoId}/end")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response completeVideo(@PathParam("videoId") String videoId) {
-		return null;
+	public JsonResponse completeVideo(@PathParam("videoId") String videoId) {
+		try {
+			Video video = Video.getById(Integer.parseInt(videoId));
+			//video.allUploaded()
+			
+			return JsonResponse.createResponse(null);
+		}
+		catch(Exception e) {
+			return JsonResponse.failedResponse(e.getMessage());
+		}
 	}
 	
 	@GET
 	@Path("list")
 	@Produces(MediaType.APPLICATION_JSON) 
-	public List<SimpleVideoMeta> getList() {
-		List<SimpleVideoMeta> resultList = new ArrayList<SimpleVideoMeta>();
-		resultList.add(new SimpleVideoMeta("abc", ""));
-		resultList.add(new SimpleVideoMeta("def", ""));
-		
-		return resultList;
+	public JsonResponse getList() {
+		try {
+			return JsonResponse.createResponse(Video.getAllVideo());
+		}
+		catch(Exception e) {
+			return JsonResponse.failedResponse(e.getMessage());
+		}
 	}
 	
 	@GET
@@ -68,7 +95,7 @@ public class VideoResource {
 	
 	@GET
 	@Path("{videoId}/{representationId}/{segmentId}")
-	@Produces("video/3gp")
+	@Produces("video/mp4")
 	public Response getVideoSegment(
 				@PathParam("videoId") String videoId,
 				@PathParam("representationId") String representationId,
@@ -76,11 +103,11 @@ public class VideoResource {
 			) {
 		
 		
-    	File f = new File("D:/myfiles/temp/v.3gp");
+    	File f = new File("D:/myfiles/temp/minion.mp4");
     	
     	ResponseBuilder response = Response.ok((Object)f);
     	
-    	response.header("Content-Disposition", "attachment; filename=v.3gp");
+    	response.header("Content-Disposition", "inline; filename=minion.mp4");
     	
     	return response.build();
 	}
