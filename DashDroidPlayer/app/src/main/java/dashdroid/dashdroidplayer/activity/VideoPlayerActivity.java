@@ -5,7 +5,7 @@ import android.os.Bundle;
 
 import dashdroid.dashdroidplayer.R;
 
-//https://www.youtube.com/watch?v=XQwe30cZffg
+//https://code.tutsplus.com/tutorials/streaming-video-in-android-apps--cms-19888
 public class VideoPlayerActivity extends AppCompatActivity {
 
     @Override
