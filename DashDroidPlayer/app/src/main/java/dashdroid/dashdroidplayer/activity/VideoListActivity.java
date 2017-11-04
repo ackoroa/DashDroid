@@ -1,6 +1,7 @@
 package dashdroid.dashdroidplayer.activity;
 
 import android.app.ListActivity;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
@@ -23,6 +24,7 @@ import java.util.Map;
 import dashdroid.dashdroidplayer.R;
 
 public class VideoListActivity extends ListActivity {
+    //TODO this needs to be (id, name)
     ArrayList<String> videos = new ArrayList<String>();
     ArrayAdapter<String> adapter;
 
@@ -52,8 +54,13 @@ public class VideoListActivity extends ListActivity {
 
     @Override
     protected void onListItemClick(ListView l, View v, int position, long id) {
+        String videoId = videos.get(position);
         String videoName = videos.get(position);
         Log.i("trace", videoName + " selected");
+
+        Intent intent = new Intent(VideoListActivity.this, VideoPlayerActivity.class);
+        intent.putExtra("vidId", videoId);
+        startActivity(intent);
     }
 
     public void refreshVideoList() {
