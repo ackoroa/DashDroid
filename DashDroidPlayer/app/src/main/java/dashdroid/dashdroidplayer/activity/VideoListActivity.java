@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 
 import dashdroid.dashdroidplayer.R;
+import dashdroid.dashdroidplayer.util.JsonUtil;
 import dashdroid.dashdroidplayer.util.StringDownloader;
 
 public class VideoListActivity extends ListActivity {
@@ -62,8 +63,6 @@ public class VideoListActivity extends ListActivity {
     }
 
     private class VideoListRetriever extends AsyncTask<Void, Void, List<Pair<String, String>>> {
-        ObjectMapper mapper = new ObjectMapper();
-
         @Override
         protected List<Pair<String, String>> doInBackground(Void... params) {
             try {
@@ -71,7 +70,7 @@ public class VideoListActivity extends ListActivity {
                 String response = StringDownloader.download(url);
                 Log.i("trace", "response received: " + response);
 
-                Map<String, Object> map = mapper.readValue(response, new TypeReference<Map<String, Object>>(){});
+                Map<String, Object> map = JsonUtil.fromJson(response);
                 List<Map<String, Object>> videoData =  (List<Map<String, Object>>) map.get("data");
                 Log.i("trace", "response parsed: " + videoData);
 

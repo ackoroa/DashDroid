@@ -14,6 +14,7 @@ import java.io.File;
 import dashdroid.dashdroidplayer.logic.MPDParser;
 import dashdroid.dashdroidplayer.logic.RepresentationPicker;
 import dashdroid.dashdroidplayer.logic.VideoBuffer;
+import dashdroid.dashdroidplayer.model.Representation;
 import dashdroid.dashdroidplayer.util.FileUtils;
 import dashdroid.dashdroidplayer.R;
 import dashdroid.dashdroidplayer.model.MPD;
@@ -47,7 +48,7 @@ public class VideoPlayerActivity extends AppCompatActivity {
             }
         });
 
-        new DashManager().execute(); //TODO download MPD first then call this
+        new MPDDownloader().execute();
     }
 
     @Override
@@ -86,12 +87,13 @@ public class VideoPlayerActivity extends AppCompatActivity {
         @Override
         protected String doInBackground(Void... params) {
             if (curIdx <= mpd.getLastSegmentIdx()) {
-                return mpd.getVideoBaseUrl() +
-                        repPicker.chooseRepresentation(
-                                mpd.representations,
-                                buffer.getBufferContentSize(),
-                                latestBandwidth)
-                                .getSegmentUrl(curIdx);
+                Representation rep = repPicker.chooseRepresentation(
+                        mpd.representations,
+                        buffer.getBufferContentSize(),
+                        latestBandwidth);
+                if (rep != null) {
+                    return mpd.getVideoBaseUrl() + rep.getSegmentUrl(curIdx);
+                }
             }
             return null;
         }
