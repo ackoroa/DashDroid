@@ -10,6 +10,9 @@ import android.widget.ProgressBar;
 import android.widget.VideoView;
 
 import java.io.File;
+import java.util.Collections;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import dashdroid.dashdroidplayer.logic.MPDParser;
 import dashdroid.dashdroidplayer.logic.RepresentationPicker;
@@ -21,8 +24,10 @@ import dashdroid.dashdroidplayer.model.MPD;
 import dashdroid.dashdroidplayer.util.StringDownloader;
 
 public class VideoPlayerActivity extends AppCompatActivity {
-    VideoBuffer buffer = new VideoBuffer();
-    RepresentationPicker repPicker = new RepresentationPicker();
+    private static RepresentationPicker repPicker = new RepresentationPicker();
+
+    volatile boolean running;
+    private VideoBuffer buffer = new VideoBuffer();
 
     String videoId;
     VideoView vidView;
@@ -32,6 +37,8 @@ public class VideoPlayerActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_video_player);
+
+        running = true;
 
         vidView = (VideoView)findViewById(R.id.dashPlayer);
         spinnerView = (ProgressBar) findViewById(R.id.spinner);
@@ -43,8 +50,10 @@ public class VideoPlayerActivity extends AppCompatActivity {
         vidView.setOnCompletionListener(new MediaPlayer.OnCompletionListener(){
             @Override
             public void onCompletion(MediaPlayer mp) {
-                new VideoPlayer().execute();
-                new VideoDeleter().execute();
+                if (running) {
+                    new VideoPlayer().execute();
+                    new VideoDeleter().execute();
+                }
             }
         });
 
@@ -54,14 +63,16 @@ public class VideoPlayerActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
         buffer.cleanAll();
+        running = false;
+
         super.onBackPressed();
     }
 
-    private boolean started = false;
-    private int curIdx = 0;
-    private double latestBandwidth = 0;
+    private volatile boolean started = false;
+    private volatile int curIdx = 0;
+    private volatile double latestBandwidth = 0;
 
-    private MPD mpd;
+    private volatile MPD mpd;
 
     private boolean videoFinished() {
         return curIdx >= mpd.getLastSegmentIdx() && mpd.isFinishedVideo();
@@ -79,7 +90,10 @@ public class VideoPlayerActivity extends AppCompatActivity {
             if (result != null) {
                 mpd = result;
             }
-            new DashManager().execute();
+
+            if (running) {
+                new DashManager().execute();
+            }
         }
     }
 
@@ -88,8 +102,8 @@ public class VideoPlayerActivity extends AppCompatActivity {
         protected String doInBackground(Void... params) {
             if (curIdx <= mpd.getLastSegmentIdx()) {
                 Representation rep = repPicker.chooseRepresentation(
+                        buffer,
                         mpd.representations,
-                        buffer.getBufferContentSize(),
                         latestBandwidth);
                 if (rep != null) {
                     return mpd.getVideoBaseUrl() + rep.getSegmentUrl(curIdx);
@@ -105,13 +119,15 @@ public class VideoPlayerActivity extends AppCompatActivity {
                 new VideoPlayer().execute();
             }
 
-            if (videoToDownload != null) {
-                new VideoDownloader().execute(videoToDownload);
-            } else if (!videoFinished()) {
-                if (!mpd.isFinishedVideo()) {
-                    new MPDDownloader().execute();
-                } else {
-                    new DashManager().execute();
+            if (running) {
+                if (videoToDownload != null) {
+                    new VideoDownloader().execute(videoToDownload);
+                } else if (!videoFinished()) {
+                    if (!mpd.isFinishedVideo()) {
+                        new MPDDownloader().execute();
+                    } else {
+                        new DashManager().execute();
+                    }
                 }
             }
         }
@@ -122,7 +138,7 @@ public class VideoPlayerActivity extends AppCompatActivity {
     }
 
     private class VideoDownloader extends AsyncTask<String, Void, File> {
-        long downloadStartTime;
+        private volatile long downloadStartTime;
 
         @Override
         protected File doInBackground(String... params) {
@@ -139,7 +155,12 @@ public class VideoPlayerActivity extends AppCompatActivity {
             latestBandwidth = result.length() / downloadTime;
 
             curIdx++;
-            new DashManager().execute();
+
+            if (running) {
+                new DashManager().execute();
+            } else {
+                result.delete();
+            }
         }
     }
 
@@ -156,7 +177,10 @@ public class VideoPlayerActivity extends AppCompatActivity {
                     return;
                 } else {
                     spinnerView.setVisibility(View.VISIBLE);
-                    new VideoPlayer().execute();
+
+                    if (running) {
+                        new VideoPlayer().execute();
+                    }
                 }
             } else {
                 String vidPath = buffer.poll();

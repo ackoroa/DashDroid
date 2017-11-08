@@ -9,18 +9,22 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import dashdroid.dashdroidplayer.util.FileUtils;
 
 public class VideoBuffer {
-    private final static long BUFFER_TOTAL_SIZE = 100 * 1024 * 1024;
-    private long bufferContentSize = 0;
+    public final static long BUFFER_TOTAL_SIZE = 100 * 1024 * 1024;
+    private volatile long bufferContentSize = 0;
 
-    private Queue<File> playQueue = new ConcurrentLinkedQueue<>();
-    private Queue<File> delQueue = new ConcurrentLinkedQueue<>();
-
-    public boolean filledTo(double fillRatio) {
-        return bufferContentSize >= BUFFER_TOTAL_SIZE * fillRatio;
-    }
+    private volatile Queue<File> playQueue = new ConcurrentLinkedQueue<>();
+    private volatile Queue<File> delQueue = new ConcurrentLinkedQueue<>();
 
     public boolean isEmpty() {
         return playQueue.isEmpty();
+    }
+
+    public double fillRatio() {
+        return (double) bufferContentSize / BUFFER_TOTAL_SIZE;
+    }
+
+    public boolean filledTo(double fillRatio) {
+        return fillRatio() > fillRatio;
     }
 
     public long getBufferContentSize() {
