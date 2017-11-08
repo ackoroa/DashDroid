@@ -11,11 +11,13 @@ import android.widget.VideoView;
 
 import java.io.File;
 
+import dashdroid.dashdroidplayer.logic.MPDParser;
 import dashdroid.dashdroidplayer.logic.RepresentationPicker;
 import dashdroid.dashdroidplayer.logic.VideoBuffer;
 import dashdroid.dashdroidplayer.util.FileUtils;
 import dashdroid.dashdroidplayer.R;
 import dashdroid.dashdroidplayer.model.MPD;
+import dashdroid.dashdroidplayer.util.StringDownloader;
 
 public class VideoPlayerActivity extends AppCompatActivity {
     VideoBuffer buffer = new VideoBuffer();
@@ -44,7 +46,8 @@ public class VideoPlayerActivity extends AppCompatActivity {
                 new VideoDeleter().execute();
             }
         });
-        new DashManager().execute();
+
+        new DashManager().execute(); //TODO download MPD first then call this
     }
 
     @Override
@@ -63,16 +66,32 @@ public class VideoPlayerActivity extends AppCompatActivity {
         return curIdx >= mpd.getLastSegmentIdx() && mpd.isFinishedVideo();
     }
 
+    private class MPDDownloader extends AsyncTask<Void, Void, MPD> {
+        @Override
+        protected MPD doInBackground(Void... params) {
+            return MPDParser.parse(MPD.getSourceUrl(videoId));
+        }
+
+        @Override
+        protected void onPostExecute(MPD result) {
+            super.onPostExecute(result);
+            if (result != null) {
+                mpd = result;
+            }
+            new DashManager().execute();
+        }
+    }
+
     private class DashManager extends AsyncTask<Void, Void, String> {
         @Override
         protected String doInBackground(Void... params) {
-            mpd = new MPD(); //TODO
-
             if (curIdx <= mpd.getLastSegmentIdx()) {
-                return repPicker.chooseRepresentation(
-                        mpd.getRepresentations(curIdx),
-                        buffer.getBufferContentSize(),
-                        latestBandwidth);
+                return mpd.getVideoBaseUrl() +
+                        repPicker.chooseRepresentation(
+                                mpd.representations,
+                                buffer.getBufferContentSize(),
+                                latestBandwidth)
+                                .getSegmentUrl(curIdx);
             }
             return null;
         }
@@ -87,7 +106,11 @@ public class VideoPlayerActivity extends AppCompatActivity {
             if (videoToDownload != null) {
                 new VideoDownloader().execute(videoToDownload);
             } else if (!videoFinished()) {
-                new DashManager().execute();
+                if (!mpd.isFinishedVideo()) {
+                    new MPDDownloader().execute();
+                } else {
+                    new DashManager().execute();
+                }
             }
         }
 

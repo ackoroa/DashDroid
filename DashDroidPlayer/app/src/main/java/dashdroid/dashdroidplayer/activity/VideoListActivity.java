@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
+import android.util.Pair;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
@@ -12,34 +13,26 @@ import android.widget.ListView;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import dashdroid.dashdroidplayer.R;
+import dashdroid.dashdroidplayer.util.StringDownloader;
 
 public class VideoListActivity extends ListActivity {
-    //TODO this needs to be (id, name)
-    ArrayList<String> videos = new ArrayList<String>();
+    List<Pair<String, String>> videos = new ArrayList<>();
+    ArrayList<String> videoNames = new ArrayList<>();
     ArrayAdapter<String> adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.i("trace", "creating video list activity");
         setContentView(R.layout.activity_video_list);
 
-        Log.i("trace", "creating list adapter");
-        adapter = new ArrayAdapter<String>(this,
-                android.R.layout.simple_list_item_1, videos);
+        adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, videoNames);
         setListAdapter(adapter);
 
-        Log.i("trace", "creating button listener");
         View refreshBtn = findViewById(R.id.refreshBtn);
         refreshBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -48,14 +41,14 @@ public class VideoListActivity extends ListActivity {
             }
         });
 
-        Log.i("trace", "initial vido list GET");
+        Log.i("trace", "initial video list GET");
         refreshVideoList();
     }
 
     @Override
     protected void onListItemClick(ListView l, View v, int position, long id) {
-        String videoId = videos.get(position);
-        String videoName = videos.get(position);
+        String videoId = videos.get(position).first;
+        String videoName = videos.get(position).second;
         Log.i("trace", videoName + " selected");
 
         Intent intent = new Intent(VideoListActivity.this, VideoPlayerActivity.class);
@@ -68,45 +61,45 @@ public class VideoListActivity extends ListActivity {
         new VideoListRetriever().execute();
     }
 
-    private class VideoListRetriever extends AsyncTask<Void, Void, List<String>> {
+    private class VideoListRetriever extends AsyncTask<Void, Void, List<Pair<String, String>>> {
         ObjectMapper mapper = new ObjectMapper();
 
         @Override
-        protected List<String> doInBackground(Void... params) {
+        protected List<Pair<String, String>> doInBackground(Void... params) {
             try {
-                URL url = new URL("http://monterosa.d2.comp.nus.edu.sg:32768/dash-server/rest/video/list");
-                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                BufferedReader reader = new BufferedReader(new InputStreamReader((InputStream) conn.getContent()));
-                String response = reader.readLine();
-
+                String url = "http://monterosa.d2.comp.nus.edu.sg:32768/dash-server/rest/video/list";
+                String response = StringDownloader.download(url);
                 Log.i("trace", "response received: " + response);
 
-                Map<String, Object> map = mapper.readValue(
-                        response,
-                        new TypeReference<Map<String, Object>>(){}
-                );
-                Log.i("trace", "response parsed: " + map.get("data"));
+                Map<String, Object> map = mapper.readValue(response, new TypeReference<Map<String, Object>>(){});
+                List<Map<String, Object>> videoData =  (List<Map<String, Object>>) map.get("data");
+                Log.i("trace", "response parsed: " + videoData);
 
-                List<String> videoNames = new ArrayList<>();
-                for (Map<String, Object> videoData : (List<Map<String, Object>>) map.get("data")) {
-                    videoNames.add(videoData.get("id").toString());
+                List<Pair<String, String>> newVideos = new ArrayList<>();
+                for (Map<String, Object> videoDatum : videoData) {
+                    String id = videoDatum.get("id").toString();
+                    String name = videoDatum.get("name").toString();
+                    newVideos.add(new Pair<String, String>(id, name));
                 }
 
-                return videoNames;
+                return newVideos;
             } catch (Exception e) {
                 Log.e("error", e.getMessage(), e);
-                return new ArrayList<String>();
+                return new ArrayList<Pair<String, String>>();
             }
         }
 
         @Override
-        protected void onPostExecute(List<String> result) {
+        protected void onPostExecute(List<Pair<String, String>> result) {
             super.onPostExecute(result);
             if (!result.isEmpty()) {
                 Log.i("trace", "Videos found. Refresh video list");
 
-                videos.clear();
-                videos.addAll(result);
+                videos = result;
+                videoNames.clear();
+                for (Pair<String, String>video : videos) {
+                    videoNames.add(video.first);
+                }
                 adapter.notifyDataSetChanged();
             }
         }
