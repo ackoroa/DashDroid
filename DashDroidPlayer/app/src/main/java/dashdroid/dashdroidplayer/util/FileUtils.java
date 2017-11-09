@@ -23,7 +23,7 @@ public class FileUtils {
             FileOutputStream writer = new FileOutputStream(file);
             writer.getChannel().transferFrom(rbc, 0, Long.MAX_VALUE);
         } catch (Exception e) {
-            Log.e("error", e.getMessage(), e);
+            Log.e("trace", e.getMessage(), e);
         }
         Log.i("trace", url + " downloaded");
         return file;
@@ -46,7 +46,7 @@ public class FileUtils {
             file = File.createTempFile(fileName, null, context.getFilesDir());
             Log.i("trace", "File created at " + file.getPath());
         } catch (IOException e) {
-            Log.e("error", e.getMessage(), e);
+            Log.e("trace", e.getMessage(), e);
             file = null;
         }
         return file;

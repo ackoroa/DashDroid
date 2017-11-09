@@ -10,21 +10,18 @@ import android.widget.ProgressBar;
 import android.widget.VideoView;
 
 import java.io.File;
-import java.util.Collections;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 import dashdroid.dashdroidplayer.logic.MPDParser;
+import dashdroid.dashdroidplayer.logic.RepLevel;
 import dashdroid.dashdroidplayer.logic.RepresentationPicker;
 import dashdroid.dashdroidplayer.logic.VideoBuffer;
 import dashdroid.dashdroidplayer.model.Representation;
 import dashdroid.dashdroidplayer.util.FileUtils;
 import dashdroid.dashdroidplayer.R;
 import dashdroid.dashdroidplayer.model.MPD;
-import dashdroid.dashdroidplayer.util.StringDownloader;
 
 public class VideoPlayerActivity extends AppCompatActivity {
-    private static RepresentationPicker repPicker = new RepresentationPicker();
+    private RepresentationPicker repPicker;
 
     volatile boolean running;
     private VideoBuffer buffer = new VideoBuffer();
@@ -91,6 +88,13 @@ public class VideoPlayerActivity extends AppCompatActivity {
                 mpd = result;
             }
 
+            if (!started) {
+                repPicker = new RepresentationPicker(
+                        mpd.representations,
+                        mpd.getSegmentDuration()
+                );
+            }
+
             if (running) {
                 new DashManager().execute();
             }
@@ -101,20 +105,19 @@ public class VideoPlayerActivity extends AppCompatActivity {
         @Override
         protected String doInBackground(Void... params) {
             if (curIdx <= mpd.getLastSegmentIdx()) {
-                Representation rep = repPicker.chooseRepresentation(
-                        buffer,
-                        mpd.representations,
-                        latestBandwidth);
-                if (rep != null) {
-                    return mpd.getVideoBaseUrl() + rep.getSegmentUrl(curIdx);
-                }
+                RepLevel repLevel = repPicker.chooseRepresentation(
+                        buffer.getBufferContentDuration(),
+                        latestBandwidth
+                );
+                Representation rep = mpd.representations.get(repLevel.ordinal());
+                return mpd.getVideoBaseUrl() + rep.getSegmentUrl(curIdx);
             }
             return null;
         }
 
         @Override
         protected void onPostExecute(String videoToDownload) {
-            if (!started && okToGo()) {
+            if (!started && !buffer.isEmpty()) {
                 started = true;
                 new VideoPlayer().execute();
             }
@@ -131,10 +134,6 @@ public class VideoPlayerActivity extends AppCompatActivity {
                 }
             }
         }
-
-        private boolean okToGo() {
-            return buffer.filledTo(0.5) || (curIdx >= mpd.getLastSegmentIdx());
-        }
     }
 
     private class VideoDownloader extends AsyncTask<String, Void, File> {
@@ -149,7 +148,7 @@ public class VideoPlayerActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(File result) {
             super.onPostExecute(result);
-            buffer.offer(result);
+            buffer.offer(result, mpd.getSegmentDuration());
 
             double downloadTime = (double) (System.nanoTime() - downloadStartTime) / 1000000000;
             latestBandwidth = result.length() / downloadTime;
@@ -195,7 +194,7 @@ public class VideoPlayerActivity extends AppCompatActivity {
     private class VideoDeleter extends AsyncTask<Void, Void, Void> {
         @Override
         protected Void doInBackground(Void... params) {
-            buffer.cleanOne();
+            buffer.cleanOne(mpd.getSegmentDuration());
             return null;
         }
     }

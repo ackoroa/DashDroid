@@ -13,7 +13,7 @@ public class StringDownloader {
         try {
             response = IOUtils.toString(new URL(url));
         } catch (Exception e) {
-            Log.e("error", e.getMessage(), e);
+            Log.e("trace", e.getMessage(), e);
         }
 
         return response;

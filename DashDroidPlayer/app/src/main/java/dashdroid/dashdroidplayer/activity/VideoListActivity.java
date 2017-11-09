@@ -83,7 +83,7 @@ public class VideoListActivity extends ListActivity {
 
                 return newVideos;
             } catch (Exception e) {
-                Log.e("error", e.getMessage(), e);
+                Log.e("trace", e.getMessage(), e);
                 return new ArrayList<Pair<String, String>>();
             }
         }

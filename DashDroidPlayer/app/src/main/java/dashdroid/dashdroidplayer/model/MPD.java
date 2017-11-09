@@ -31,12 +31,17 @@ public class MPD {
         //return BASE_URL + videoId + "/MPD";
     }
 
-    @JsonIgnore
+    @JsonProperty
     public int getLastSegmentIdx() {
         return representations.get(0).numberOfSegments;
     }
 
-    @JsonIgnore
+    @JsonProperty
+    public int getSegmentDuration() {
+        return representations.get(0).segmentDuration;
+    }
+
+    @JsonProperty
     public boolean isFinishedVideo() {
         return videoType.equals(VideoType.STATIC);
     }

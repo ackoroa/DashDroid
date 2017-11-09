@@ -26,7 +26,7 @@ public class MPDParser {
             Log.i("trace", "Parsed MPD: " + mpd.toString());
             return mpd;
         } catch (Exception e) {
-            Log.e("error", e.getMessage(), e);
+            Log.e("trace", e.getMessage(), e);
             return null;
         }
     }

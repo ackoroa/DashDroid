@@ -15,7 +15,7 @@ public class JsonUtil {
         try {
             return mapper.readValue(jsonString, new TypeReference<Map<String, Object>>(){});
         } catch (IOException e) {
-            Log.e("error", e.getMessage(), e);
+            Log.e("trace", e.getMessage(), e);
             return null;
         }
     }
@@ -24,7 +24,7 @@ public class JsonUtil {
         try {
             return mapper.writeValueAsString(obj);
         } catch (IOException e) {
-            Log.e("error", e.getMessage(), e);
+            Log.e("trace", e.getMessage(), e);
             return null;
         }
     }

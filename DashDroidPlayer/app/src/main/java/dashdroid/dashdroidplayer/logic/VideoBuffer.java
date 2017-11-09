@@ -1,7 +1,5 @@
 package dashdroid.dashdroidplayer.logic;
 
-import android.util.Log;
-
 import java.io.File;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -9,8 +7,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import dashdroid.dashdroidplayer.util.FileUtils;
 
 public class VideoBuffer {
-    public final static long BUFFER_TOTAL_SIZE = 100 * 1024 * 1024;
-    private volatile long bufferContentSize = 0;
+    public final static int BUFFER_TOTAL_DURATION = 30;
+    private volatile int bufferContentDuration = 0;
 
     private volatile Queue<File> playQueue = new ConcurrentLinkedQueue<>();
     private volatile Queue<File> delQueue = new ConcurrentLinkedQueue<>();
@@ -19,16 +17,12 @@ public class VideoBuffer {
         return playQueue.isEmpty();
     }
 
-    public double fillRatio() {
-        return (double) bufferContentSize / BUFFER_TOTAL_SIZE;
+    public int level() {
+        return bufferContentDuration;
     }
 
-    public boolean filledTo(double fillRatio) {
-        return fillRatio() > fillRatio;
-    }
-
-    public long getBufferContentSize() {
-        return bufferContentSize;
+    public int getBufferContentDuration() {
+        return bufferContentDuration;
     }
 
     public String poll() {
@@ -37,19 +31,19 @@ public class VideoBuffer {
         return video.getPath();
     }
 
-    public void offer(File video) {
+    public void offer(File video, int duration) {
         playQueue.offer(video);
-        updateBufferSize(video.length());
+        updateBufferSize(duration);
     }
 
-    public void cleanOne() {
+    public void cleanOne(int duration) {
         File videoToDelete = delQueue.poll();
-        updateBufferSize(-videoToDelete.length());
+        updateBufferSize(-duration);
         FileUtils.delete(videoToDelete);
     }
 
     public void cleanAll() {
-        bufferContentSize = 0;
+        bufferContentDuration = 0;
         for (File videoToDelete : delQueue) {
             FileUtils.delete(videoToDelete);
         }
@@ -61,6 +55,6 @@ public class VideoBuffer {
     }
 
     private synchronized void updateBufferSize(long delta) {
-        bufferContentSize += delta;
+        bufferContentDuration += delta;
     }
 }
