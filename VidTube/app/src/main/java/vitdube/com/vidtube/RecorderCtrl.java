@@ -251,7 +251,7 @@ public class RecorderCtrl
         recording = true;
         recorder.start();
         startTime = new Date().getTime();
-        startSplitting();
+//        startSplitting();
     }
 
     public void startSplitting() {
