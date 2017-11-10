@@ -53,6 +53,12 @@ public class DBCall {
 
 		return this;
 	}
+	
+	public DBCall setChar(char c) throws SQLException {
+		statement.setString(parameterIndex, "" + c);
+		parameterIndex++;
+		return this;
+	}
 
 	public DBCall setDate(Time dt) throws SQLException {
 		statement.setTime(parameterIndex, dt);

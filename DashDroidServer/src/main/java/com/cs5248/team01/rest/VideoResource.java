@@ -13,6 +13,8 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 
 import org.apache.log4j.Logger;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import com.cs5248.team01.model.JsonResponse;
 import com.cs5248.team01.model.Video;
@@ -22,10 +24,29 @@ public class VideoResource {
 	
 	final static Logger logger = Logger.getLogger(VideoResource.class.getSimpleName());
 	
+	@POST
+	@Path("new")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public JsonResponse newVideo(String data) {
+		try {
+			String name = "";
+			if(data != null && !data.equals("")) {
+				JSONObject obj = new JSONObject(data);
+				name = obj.getString("name");
+			}
+			
+			return JsonResponse.createResponse(Video.newVideo(name));
+		}
+		catch(Exception e) {
+			return JsonResponse.failedResponse(e.getMessage());
+		}
+	}
+	
 	@GET
 	@Path("new")
 	@Produces(MediaType.APPLICATION_JSON)
-	public JsonResponse newVideo(String data) {
+	public JsonResponse newVideo2() {
 		try {
 			return JsonResponse.createResponse(Video.newVideo(""));
 		}
@@ -40,15 +61,28 @@ public class VideoResource {
 	@Consumes(MediaType.APPLICATION_OCTET_STREAM)
 	public JsonResponse uploadSegment(@PathParam("videoId") String videoId, @PathParam("sequenceNum") String sequenceNum, InputStream payload) {
 		try {
+			logger.info("uploadSegment");
 			Video video = Video.getById(Integer.parseInt(videoId));
+			logger.info("video found");
+			video.addSegment(payload, Integer.parseInt(sequenceNum));
+			logger.info("segment added");
 			//video.addVideoSegment(Integer.parseInt(sequenceNum), payload);
 				    //for testing
 			return JsonResponse.createResponse(payload.available());
 		}
 		catch(Exception e) {
+			logger.info(e.toString());
+			logger.info(org.apache.commons.lang.exception.ExceptionUtils.getStackTrace(e));
 			return JsonResponse.failedResponse(e.getMessage());
 		}
 
+	}
+	
+	@POST
+	@Consumes(MediaType.APPLICATION_JSON)
+	public JsonResponse updateVideo(@PathParam("videoId") String videoId, String data) {
+		return null;
+		
 	}
 	
 //	@GET
@@ -103,7 +137,7 @@ public class VideoResource {
 			) {
 		
 		
-    	File f = new File("D:/myfiles/temp/minion.mp4");
+    	File f = new File("/dashserver/minion.mp4");
     	
     	ResponseBuilder response = Response.ok((Object)f);
     	

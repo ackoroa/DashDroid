@@ -1,14 +1,25 @@
 package com.cs5248.team01.model;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import org.apache.log4j.Logger;
+
+import com.cs5248.team01.jobs.ThreadExecutor;
+import com.cs5248.team01.jobs.TranscoderTask;
 import com.cs5248.team01.persistent.DBCall;
+import com.cs5248.team01.persistent.FileManager;
+import com.cs5248.team01.rest.VideoResource;
 
 public final class Video {
+	
+	final static Logger logger = Logger.getLogger(Video.class.getSimpleName());
 	
 	public static Integer newVideo(String name) throws ClassNotFoundException, SQLException {
 		return new DBCall().createStatement(INSERT_STATEMENT)
@@ -18,12 +29,13 @@ public final class Video {
 	}
 	
 	public static List<Video> getAllVideo() throws ClassNotFoundException, SQLException {
-		return new DBCall().createStatement("SELECT * FROM Video")
+		return new DBCall().createStatement("SELECT * FROM video")
 				.executeQuery(multipleResultMapper);
 	}
 	
 	public static Video getById(int id) throws ClassNotFoundException, SQLException {
-		return new DBCall().createStatement("SELECT * FROM Video")
+		return new DBCall().createStatement("SELECT * FROM video where id = ?")
+				.setInt(id)
 				.executeQuery(oneResultMapper);
 	}
 	
@@ -56,8 +68,15 @@ public final class Video {
 
 		@Override
 		public Video map(ResultSet rs) throws SQLException, RuntimeException {
-			// TODO Auto-generated method stub
-			return null;
+			rs.next();
+			int id = rs.getInt(COLUMN_ID);
+			
+			Video v = new Video(id);
+			v.setName(rs.getString(COLUMN_NAME));
+			v.setFullVideo(rs.getString(COLUMN_IS_FULL_VIDEO) == FULL_VIDEO_TRUE);
+			v.setCreationDateTime(rs.getDate(COLUMN_CREATION_DATETIME));
+			v.setLastModifiedDateTime(rs.getDate(COLUMN_LAST_MODIFIED_DATETIME));
+			return v;
 		}
 		
 	};
@@ -106,7 +125,14 @@ public final class Video {
 		return id;
 	}
 	
-
+	public void addSegment(InputStream data, int sequenceNum) throws IOException, ClassNotFoundException, SQLException {
+		String filePath = FileManager.writeVideoFile(data, this.id, sequenceNum);
+		Segment.newSegment(this, filePath, sequenceNum);
+		logger.info("Running task");
+		ThreadExecutor.submitTask(new TranscoderTask(filePath));
+		logger.info("task triggered");
+		
+	}
 
 	
 }

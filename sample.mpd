@@ -1,0 +1,50 @@
+<!-- Headers are mostly broilerplate, can copy verbatm everywhere
+     To set: mediaPresentationDuration, type=<static|dynamic>
+     References:
+     - https://bitmovin.com/dynamic-adaptive-streaming-http-mpeg-dash/
+     - https://www.brendanlong.com/the-structure-of-an-mpeg-dash-mpd.html
+     - http://www-itec.uni-klu.ac.at/dash/?page_id=605#
+     Somehow validation fails with the comments in the MPD
+-->
+<?xml version='1.0' encoding='UTF-8'?>
+<MPD xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'
+     xmlns='urn:mpeg:dash:schema:mpd:2011'
+     xsi:schemaLocation='urn:mpeg:dash:schema:mpd:2011 http://standards.iso.org/ittf/PubliclyAvailableStandards/MPEG-DASH_schema_files/DASH-MPD.xsd'
+     minBufferTime='PT1.5S'
+     mediaPresentationDuration='PT10S' 
+     profiles='urn:mpeg:dash:profile:isoff-main:2011'
+     type='static'>
+  <Period start='PT0S' id='vidid'>
+    <!-- This means http://monterosa.d2.comp.nus.edu.sg:32768/dash-server/rest/video/videoid/ -->
+    <BaseURL>vidid/</BaseURL>
+    <AdaptationSet mimeType='video/mp4'>
+      <!-- To set: bandwidth, frame rate -->
+      <Representation id='low' bandwidth='128000' frameRate='60'>
+        <BaseURL>low/</BaseURL>
+        <!-- This means vidid-0.mp4, vidid-1.mp4, ... -->
+        <SegmentTemplate media="vidid-$Number$.mp4" startNumber="0" timescale="1">
+          <SegmentTimeline>
+            <!-- From time 0, there are 10 segments of d/timescale = 2s each -->
+            <S t="0" r="10" d="2"/>
+          </SegmentTimeline>
+        </SegmentTemplate>
+      </Representation>
+      <Representation id='mid' bandwidth='256000' frameRate='60'>
+        <BaseURL>mid/</BaseURL>
+        <SegmentTemplate media="vidid-$Number$.mp4" startNumber="0" timescale="1">
+          <SegmentTimeline>
+            <S t="0" r="10" d="2"/>
+          </SegmentTimeline>
+        </SegmentTemplate>
+      </Representation>
+      <Representation id='high' bandwidth='512000' frameRate='60'>
+        <BaseURL>high/</BaseURL>
+        <SegmentTemplate media="vidid-$Number$.mp4" startNumber="0" timescale="1">
+          <SegmentTimeline>
+            <S t="0" r="10" d="2"/>
+          </SegmentTimeline>
+        </SegmentTemplate>
+      </Representation>
+    </AdaptationSet>
+  </Period>
+</MPD>
