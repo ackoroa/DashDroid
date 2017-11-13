@@ -68,13 +68,16 @@ public class Segmenter {
                         Thread.sleep(1000);
                     }
 
-                    Log.i(TAG, "Video" + " duration:" + videoDuration + " Starting: " + (segmentIdx - 1) * 2);
+                    Log.i(TAG, "Video" + " duration:" + videoDuration +
+                            " Starting: " + segmentIdx * SEGMENT_LENGTH_MS/1000);
+
                     String segFilePath = splitFilePrefix + "s" + segmentIdx + ".mp4";
                     Command command = videoKit.createCommand()
                             .overwriteOutput()
                             .inputPath(originFilePath)
                             .outputPath(segFilePath)
-                            .customCommand("-ss " + (segmentIdx - 1) * SEGMENT_LENGTH_MS/1000 + " -t " + segmentIdx * 2)
+                            .customCommand("-ss " + segmentIdx * SEGMENT_LENGTH_MS/1000
+                                    + " -t " + (segmentIdx + 1) * SEGMENT_LENGTH_MS/1000)
                             .copyVideoCodec()
                             .build();
                     VideoProcessingResult result = command.execute();
@@ -89,7 +92,7 @@ public class Segmenter {
 
                     if (!isPostProcessing) { Thread.sleep(SEGMENT_LENGTH_MS); }
 
-                } while(videoDuration - (segmentIdx - 1) * 2 > 0.5);
+                } while(videoDuration - segmentIdx * SEGMENT_LENGTH_MS/1000 > 0.5);
 
                 Log.e(TAG, "Finished trimming. total segments:" + segmentIdx);
 
