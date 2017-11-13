@@ -335,6 +335,7 @@ public class Uploader implements View.OnClickListener {
         protected Boolean doInBackground(String... strings) {
             String videoId = strings[0];
             String videoName = strings[1];
+            String total = strings[2];
             Log.i("Uploader", "End video:" + videoName);
             HttpURLConnection httpConn = null;
             try {
@@ -343,6 +344,7 @@ public class Uploader implements View.OnClickListener {
 
                 JSONObject json = new JSONObject();
                 json.put("name", videoName);
+                json.put("total", Integer.valueOf(total));
 
                 httpConn = (HttpURLConnection) url.openConnection();
                 httpConn.setDoInput(true);
@@ -392,17 +394,14 @@ public class Uploader implements View.OnClickListener {
                 Toast.makeText(context, "Ended video " + videoName, Toast.LENGTH_SHORT).show();
             }
         });
-        endTask.execute(new String[]{videoId.toString(), videoName});
+        endTask.execute(new String[]{videoId.toString(),
+                videoName,
+                String.valueOf(clipsToUpload.size())});
     }
 
-    public static void endVideo(String id, String name, PostTaskListener<Boolean> listener) {
+    public static void endVideo(String id, String videoName, int totalClips, PostTaskListener<Boolean> listener) {
         EndVideoTask endTask = new EndVideoTask(listener);
-        endTask.execute(new String[]{id, name});
-
-    }
-
-    private void updateDBClipToUpload(String videoName, boolean toUpload) {
-        dbHelper.updateDBClipToUploadStatus(writableDb, videoName, toUpload);
+        endTask.execute(new String[]{id, videoName, String.valueOf(totalClips)});
     }
 
 }

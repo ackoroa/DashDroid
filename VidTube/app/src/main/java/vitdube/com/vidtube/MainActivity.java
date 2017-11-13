@@ -27,7 +27,7 @@ import com.android.volley.toolbox.Volley;
  * An example full-screen activity that shows and hides the system UI (i.e.
  * status bar and navigation/system bar) with user interaction.
  */
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements MediaRecorder.OnInfoListener{
 
     private View mContentView;
 
@@ -35,11 +35,12 @@ public class MainActivity extends AppCompatActivity {
 
     private Button recordingButton;
     private Button viewDBButton;
+    private Button viewServerButton;
     private Switch liveSwitch;
     private Boolean isLive = false;
 
     Camera camera;
-    MediaRecorder RecorderCtrl;
+    MediaRecorder recorder;
 
     private RecorderCtrl recorderCtrl;
 
@@ -65,12 +66,14 @@ public class MainActivity extends AppCompatActivity {
 
         layout = (FrameLayout) findViewById(R.id.inner_frame_layout);
 
-        RecorderCtrl = new MediaRecorder();
+        recorder = new MediaRecorder();
+        recorder.setOnInfoListener(this);
 
         requestQueue = Volley.newRequestQueue(this);
 
         prepareRecordingButton();
         prepareViewDBButton();
+        prepareServerButton();
         prepareSwitch();
     }
 
@@ -102,10 +105,23 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         if (safeCameraOpen()) {
-            recorderCtrl = new RecorderCtrl(this, RecorderCtrl, camera);
+            recorderCtrl = new RecorderCtrl(this, recorder, camera);
             layout.addView(recorderCtrl);
         }
 
+    }
+
+    private void prepareServerButton() {
+        viewServerButton = (Button) findViewById(R.id.server_list_button);
+        viewServerButton.setClickable(true);
+        viewServerButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent mainToServerViewIntent = new Intent();
+                mainToServerViewIntent.setClass(appContext, ViewUploadedActivity.class);
+                startActivity(mainToServerViewIntent);
+            }
+        });
     }
 
     private void prepareViewDBButton() {
@@ -130,14 +146,16 @@ public class MainActivity extends AppCompatActivity {
                 if (!recorderCtrl.getRecording()) {
                     Log.i("Main", "Start Recording... live:" + isLive);
                     recorderCtrl.setIsLive(isLive);
+                    recorderCtrl.resetLiveVideo();
                     recorderCtrl.initVideoPrefix();
                     recorderCtrl.initRecorder();
+//                    recorder.setOnInfoListener();
                     recordingButton.setText("Stop Recording");
                     recorderCtrl.startRecording();
 
                 } else {
                     recordingButton.setText("Start Recording");
-
+                    recorderCtrl.setLiveEnded(true);
                     Log.i("MediaRecorderCtrl", "Stop Recording...");
                     recorderCtrl.stopRecording();
 
@@ -182,4 +200,19 @@ public class MainActivity extends AppCompatActivity {
                 new String[]{title});
     }
 
+    @Override
+    public void onInfo(MediaRecorder mediaRecorder, int what, int extra) {
+        Toast.makeText(appContext, "Info!", Toast.LENGTH_SHORT).show();
+        Log.e("UGGG", "Max duration reached!!");
+
+        if (what == MediaRecorder.MEDIA_RECORDER_INFO_MAX_DURATION_REACHED) {
+            Toast.makeText(appContext, "Chop!", Toast.LENGTH_SHORT).show();
+            recorderCtrl.stopRecording();
+            recorderCtrl.initVideoPrefix();
+            recorderCtrl.initRecorder();
+            recorder.setOnInfoListener(this);
+            recorderCtrl.startRecording();
+        }
+
+    }
 }

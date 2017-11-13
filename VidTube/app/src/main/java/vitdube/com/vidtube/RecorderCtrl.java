@@ -1,25 +1,13 @@
 package vitdube.com.vidtube;
 
-import android.Manifest;
-import android.app.Activity;
 import android.content.ContentValues;
 import android.content.Context;
-import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.hardware.Camera;
 import android.media.CamcorderProfile;
 import android.media.MediaRecorder;
-import android.media.MediaRecorder.OnInfoListener;
-import android.net.LocalServerSocket;
-import android.net.LocalSocket;
-import android.net.LocalSocketAddress;
 import android.os.AsyncTask;
-import android.os.Environment;
-import android.os.ParcelFileDescriptor;
-import android.provider.MediaStore;
-import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -27,12 +15,8 @@ import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileDescriptor;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.Socket;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -40,12 +24,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Exchanger;
-
-import processing.ffmpeg.videokit.Command;
-import processing.ffmpeg.videokit.LogLevel;
-import processing.ffmpeg.videokit.VideoKit;
-import processing.ffmpeg.videokit.VideoProcessingResult;
 
 /**
  * Created by xingjia.zhang on 11/9/17.
@@ -61,12 +39,16 @@ public class RecorderCtrl
     private boolean recording;
     private Boolean isLive = false;
     private String title;
-    private String lastFilePath;
+    private String outputFilePath;
     private String filePathPrefix;
     private Long startTime;
     private Long endTime;
     private Integer liveVideoId;
     private Segmenter segmenter = new Segmenter();
+
+    private boolean liveEnded = false;
+
+    private int liveVideoSeqNumber = 0;
 
     private static String TAG = "Recorder";
 
@@ -100,6 +82,15 @@ public class RecorderCtrl
         this.isLive = isLive;
     }
 
+    public void setLiveEnded(Boolean liveEnded) {
+        this.liveEnded = liveEnded;
+    }
+
+    public void resetLiveVideo() {
+        this.liveVideoId = null;
+        this.liveVideoSeqNumber = 0;
+        this.liveEnded = false;
+    }
 
     @Override
     public void surfaceCreated(SurfaceHolder surfaceHolder) {
@@ -126,7 +117,7 @@ public class RecorderCtrl
         this.title = "Vid_" + now;
 
         this.filePathPrefix = "/sdcard/vidTube_file_" + now + "_";
-        this.lastFilePath = "/sdcard/vidTube_file_" + now + ".mp4";
+        this.outputFilePath = "/sdcard/vidTube_file_" + now + ".mp4";
     }
 
     @Override
@@ -145,102 +136,34 @@ public class RecorderCtrl
         camera.stopPreview();
     }
 
-    class SocketSetupTask extends AsyncTask<String, Object, FileDescriptor> {
-        private PostTaskListener<FileDescriptor> postTaskListener;
-        LocalSocket sender;
-        LocalSocket receiver;
-        LocalServerSocket socket;
 
-        protected SocketSetupTask(PostTaskListener<FileDescriptor> postTaskListener){
-            this.postTaskListener = postTaskListener;
-        }
-
-        @Override
-        protected void onPostExecute(FileDescriptor result) {
-            super.onPostExecute(result);
-
-            if (result != null && postTaskListener != null) {
-                try {
-                    Log.i(TAG, "asyncTask pass result: " + result);
-                    postTaskListener.onPostTask(result);
-                    receiver = socket.accept();
-                    int ret = 0;
-                    while ((ret = receiver.getInputStream().read()) != -1) {
-                        System.out.println("ret =" + ret);
-                    }
-
-                    System.out.println("ret =" + ret);
-                } catch (Exception e) {
-
-                }
-            }
-        }
-
-        @Override
-        protected FileDescriptor doInBackground(String... strings) {
-            try {
-                Log.i(TAG, "Setting up socket....");
-                socket = new LocalServerSocket("/sdcard/tmp.mp4");
-                sender = socket.accept();
-                sender.setReceiveBufferSize(4096);
-                sender.setSendBufferSize(4096);
-                receiver = new LocalSocket();
-                receiver.connect(new LocalSocketAddress("/sdcard/tmp.mp4"));
-                receiver.setReceiveBufferSize(4096);
-                receiver.setSendBufferSize(4096);
-//                sender = new LocalSocket();
-//                sender.connect(new LocalSocketAddress("/sdcard/tmp.mp4"));
-                Log.i(TAG, "Sender:" + sender.toString());
-            } catch (Exception e) {
-                Log.e("Recorder","Can't get socket working...");
-                e.printStackTrace();
-            }
-
-            Log.i(TAG, socket.toString() + " fd: " + socket.getFileDescriptor());
-            return sender.getFileDescriptor();
-        }
-    }
 
     public void initRecorder() {
+
         camera.unlock();
         recorder.setCamera(camera);
 
         recorder.setAudioSource(MediaRecorder.AudioSource.DEFAULT);
         recorder.setVideoSource(MediaRecorder.VideoSource.DEFAULT);
 
-        CamcorderProfile cpHigh = CamcorderProfile.get(CamcorderProfile.QUALITY_HIGH);
+        CamcorderProfile cpHigh = CamcorderProfile.get(CamcorderProfile.QUALITY_480P);
         recorder.setProfile(cpHigh);
 
-        recorder.setOutputFile(lastFilePath);
-        prepareRecorder();
-//        final SocketSetupTask socketSetup = new SocketSetupTask(new PostTaskListener<FileDescriptor>() {
-//            @Override
-//            void onPostTask(FileDescriptor result) {
-//                try {
-//                    Log.i(TAG, "Setting stream file:" + result.toString());
-//
-//                    recorder.setOutputFile(result);
-//
-//                    prepareRecorder();
-//                    startRecording();
-//                } catch (Exception e) {
-//
-//                }
-//            }
-//        });
+        Log.e(TAG, "Output file path:" + outputFilePath);
+        recorder.setOutputFile(outputFilePath);
 
-//        socketSetup.execute(new String[]{""});
+        Log.e(TAG, "is live:" + isLive);
+        if (isLive) {
+            Log.e(TAG, "set max duration!");
+            recorder.setMaxDuration(6000);
+        }
 
-    }
-
-    public void prepareRecorder() {
         try {
             recorder.prepare();
-        } catch (IllegalStateException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
+
     }
 
     public void startRecording() {
@@ -254,64 +177,6 @@ public class RecorderCtrl
         startTime = new Date().getTime();
     }
 
-    public void startSplitting() {
-        AsyncTask.execute(new Runnable() {
-            @Override
-            public void run() {
-                try {
-
-                    if (isLive) {
-                        Uploader.initNewVideo(title, new PostTaskListener<String>() {
-                            @Override
-                            void onPostTask(String result) {
-                                if (result.equals("-1")) {
-                                    Uploader.initNewVideo(title, this);
-                                }
-                                liveVideoId = (Integer.valueOf(result));
-                                videoClipDbHelper.updateDBClipVideoId(db, title, liveVideoId);
-
-                                Map<String, Object> config = new HashMap<>();
-                                config.put("isPostProcessing", false);
-                                config.put("originFilePath", lastFilePath);
-                                config.put("splitFilePrefix", filePathPrefix);
-                                config.put("startTime", startTime);
-                                config.put("endTime", endTime);
-
-                                segmenter.startSplitting(config,
-                                    new PostTaskListener<String>() {
-                                        @Override
-                                        void onPostTask(String result) {
-                                            endLive();
-                                        }
-                                    }, new PostTaskListener<Map<String, Object>>() {
-                                        @Override
-                                        void onPostTask(Map<String, Object> result) {
-                                            int segmentIdx = (int) result.get("segmentIdx");
-                                            final String segmentFilePath = (String) result.get("segmentFilePath");
-                                            insertClipInfoIntoDB(segmentIdx, segmentFilePath);
-                                            videoClipDbHelper.updateDBClipUploadStatus(db, title, true);
-                                            Uploader.uploadSingleClip(liveVideoId.toString(),
-                                                    segmentIdx,
-                                                    segmentFilePath,
-                                                    new PostTaskListener<Boolean>() {
-                                                        @Override
-                                                        void onPostTask(Boolean result) {
-                                                            updateDBClipUploadStatus(segmentFilePath, result);
-                                                        }
-                                                    });
-                                        }
-                                    });
-                            }
-                        });
-                    }
-
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-    }
-
     public void stopRecording() {
         if (recording == false) {
             return;
@@ -320,13 +185,14 @@ public class RecorderCtrl
             recorder.stop();
             endTime = new Date().getTime();
 
+            final Map<String, Object> config = new HashMap<>();
+            config.put("isPostProcessing", true);
+            config.put("originFilePath", outputFilePath);
+            config.put("splitFilePrefix", filePathPrefix);
+            config.put("startTime", startTime);
+            config.put("endTime", endTime);
+
             if (!isLive) {
-                Map<String, Object> config = new HashMap<>();
-                config.put("isPostProcessing", true);
-                config.put("originFilePath", lastFilePath);
-                config.put("splitFilePrefix", filePathPrefix);
-                config.put("startTime", startTime);
-                config.put("endTime", endTime);
 
                 segmenter.startSplitting(config, new PostTaskListener<String>() {
                     @Override
@@ -338,8 +204,78 @@ public class RecorderCtrl
                     void onPostTask(Map<String, Object> result) {
                         insertClipInfoIntoDB((int) result.get("segmentIdx"),
                                 (String) result.get("segmentFilePath"));
+
                     }
                 });
+            } else {
+                if (liveVideoId == null) {
+                    Uploader.initNewVideo(title, new PostTaskListener<String>() {
+                        @Override
+                        void onPostTask(String result) {
+                            liveVideoId = Integer.valueOf(result);
+                            splitAndUpload();
+                        }
+
+                        private void splitAndUpload() {
+                            segmenter.startSplitting(config, new PostTaskListener<String>() {
+                                @Override
+                                void onPostTask(String result) {
+                                    liveVideoSeqNumber ++;
+                                    if (liveEnded) {
+                                        endLive();
+                                    }
+                                }
+                            }, new PostTaskListener<Map<String, Object>>() {
+                                @Override
+                                void onPostTask(Map<String, Object> result) {
+                                    int segmentIdx = (int) result.get("segmentIdx");
+                                    final String path = (String) result.get("segmentFilePath");
+
+                                    insertClipInfoIntoDB(segmentIdx, path);
+                                    videoClipDbHelper.updateDBClipToUploadStatus(db, title, true);
+
+                                    Uploader.uploadSingleClip(liveVideoId.toString(), segmentIdx, path,
+                                            new PostTaskListener<Boolean>() {
+                                                @Override
+                                                void onPostTask(Boolean result) {
+                                                    videoClipDbHelper.updateDBClipUploadStatus(db, path, true);
+                                                }
+                                            });
+
+                                }
+                            });
+                        }
+                    });
+                } else {
+                    segmenter.startSplitting(config, new PostTaskListener<String>() {
+                        @Override
+                        void onPostTask(String result) {
+                            liveVideoSeqNumber ++;
+                            if (liveEnded) {
+                                endLive();
+                            }
+                        }
+                    }, new PostTaskListener<Map<String, Object>>() {
+                        @Override
+                        void onPostTask(Map<String, Object> result) {
+                            int segmentIdx = (int) result.get("segmentIdx");
+                            final String path = (String) result.get("segmentFilePath");
+
+                            insertClipInfoIntoDB(segmentIdx, path);
+                            videoClipDbHelper.updateDBClipToUploadStatus(db, title, true);
+
+                            Uploader.uploadSingleClip(liveVideoId.toString(), segmentIdx + liveVideoSeqNumber * 2, path,
+                                    new PostTaskListener<Boolean>() {
+                                        @Override
+                                        void onPostTask(Boolean result) {
+                                            videoClipDbHelper.updateDBClipUploadStatus(db, path, true);
+                                        }
+                                    });
+                        }
+                    });
+                }
+
+
             }
         } catch (RuntimeException e) {
             Log.w("MediaRecorder", "Error stop the recorder...");
@@ -386,7 +322,9 @@ public class RecorderCtrl
     }
 
     private void endLive() {
-        Uploader.endVideo(liveVideoId.toString(), title, new PostTaskListener<Boolean>() {
+        Uploader.endVideo(liveVideoId.toString(), title,
+                videoClipDbHelper.getVideoClipsByName(readableDb, title).size(),
+                new PostTaskListener<Boolean>() {
             @Override
             void onPostTask(Boolean result) {
                 Log.i("Recorder", "Ending video.");
