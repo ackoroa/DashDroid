@@ -23,7 +23,7 @@ public class FileUtils {
             FileOutputStream writer = new FileOutputStream(file);
             writer.getChannel().transferFrom(rbc, 0, Long.MAX_VALUE);
 
-            Thread.sleep((int) (Properties.dlThrottleDuration() * 1000));
+            Thread.sleep((long) (Properties.dlThrottleDuration() * 1000));
         } catch (Exception e) {
             Log.e("trace", e.getMessage(), e);
         }
@@ -43,7 +43,7 @@ public class FileUtils {
         Uri vidUri = Uri.parse(url);
 
         try {
-            String fileName = vidUri.getLastPathSegment() + ".ts";
+            String fileName = vidUri.getLastPathSegment() + Properties.VIDEO_FILE_EXTENSION;
             Log.i("trace", "Creating file " + fileName);
             file = File.createTempFile(fileName, null, context.getFilesDir());
             Log.i("trace", "File created at " + file.getPath());

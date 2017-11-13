@@ -39,6 +39,9 @@ public class RepresentationPicker {
     }
 
     public RepLevel chooseRepresentation(int bufferLevel, double bandwidth) {
+        Log.i("trace", "Buffer Level: " + bufferLevel);
+        Log.i("trace", "Latest Bandwith: " + String.format("%.2f", bandwidth / 1000) + " kb/s");
+
         if (pastThroughputs.isEmpty() && bandwidth == 0) {
             Log.i("trace", "First segment, download LOW");
             return RepLevel.LOW;

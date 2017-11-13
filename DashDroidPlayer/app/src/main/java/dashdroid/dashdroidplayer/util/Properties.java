@@ -5,6 +5,7 @@ import android.util.Log;
 import java.util.Random;
 
 public class Properties {
+    public static String VIDEO_FILE_EXTENSION = ".mp4";
     public final static int BUFFER_TOTAL_DURATION = 20;
 
     private static Random rand = new Random(System.currentTimeMillis());

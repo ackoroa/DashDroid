@@ -50,14 +50,15 @@ public class VideoPlayerActivity extends AppCompatActivity {
         vidView.setOnCompletionListener(new MediaPlayer.OnCompletionListener(){
             @Override
             public void onCompletion(MediaPlayer mp) {
+                Log.i("trace", "Complete segment playback");
                 if (running) {
-                    new VideoPlayer().execute();
-                    new VideoDeleter().execute();
+                    new VideoPlayer().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+                    new VideoDeleter().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
                 }
             }
         });
 
-        new MPDDownloader().execute();
+        new MPDDownloader().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     }
 
     @Override
@@ -99,7 +100,7 @@ public class VideoPlayerActivity extends AppCompatActivity {
             }
 
             if (running) {
-                new DashManager().execute();
+                new DashManager().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
             }
         }
     }
@@ -126,13 +127,13 @@ public class VideoPlayerActivity extends AppCompatActivity {
             if (running) {
                 if (!started) {
                     started = true;
-                    new VideoPlayer().execute();
+                    new VideoPlayer().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
                 }
 
                 if (videoToDownload != null) {
-                    new VideoDownloader().execute(videoToDownload);
+                    new VideoDownloader().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, videoToDownload);
                 } else if (!videoFinished()) {
-                    new MPDDownloader().execute();
+                    new MPDDownloader().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
                 } else {
                     bandwidthMeter.setText("0 kb/s");
                 }
@@ -160,7 +161,7 @@ public class VideoPlayerActivity extends AppCompatActivity {
             curIdx++;
 
             if (running) {
-                new DashManager().execute();
+                new DashManager().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
             } else {
                 result.delete();
             }
@@ -186,7 +187,7 @@ public class VideoPlayerActivity extends AppCompatActivity {
                     spinnerView.setVisibility(View.VISIBLE);
 
                     if (running) {
-                        new VideoPlayer().execute();
+                        new VideoPlayer().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
                     }
                 }
             } else {
