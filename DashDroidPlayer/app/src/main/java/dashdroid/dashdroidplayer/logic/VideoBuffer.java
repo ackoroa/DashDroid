@@ -1,17 +1,22 @@
 package dashdroid.dashdroidplayer.logic;
 
+import android.util.Log;
+import android.util.Pair;
+
 import java.io.File;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import dashdroid.dashdroidplayer.util.FileUtils;
+import dashdroid.dashdroidplayer.util.Properties;
 
 public class VideoBuffer {
-    public final static int BUFFER_TOTAL_DURATION = 30;
+    public final static int BUFFER_TOTAL_DURATION = Properties.BUFFER_TOTAL_DURATION;
     private volatile int bufferContentDuration = 0;
 
     private volatile Queue<File> playQueue = new ConcurrentLinkedQueue<>();
     private volatile Queue<File> delQueue = new ConcurrentLinkedQueue<>();
+    private volatile Queue<RepLevel> playLevelQueue = new ConcurrentLinkedQueue<>();
 
     public boolean isEmpty() {
         return playQueue.isEmpty();
@@ -25,15 +30,22 @@ public class VideoBuffer {
         return bufferContentDuration;
     }
 
-    public String poll() {
+    public Pair<String, RepLevel> poll() {
         File video = playQueue.poll();
+        Log.i("trace", "poll from buffer " + video.getPath());
         delQueue.offer(video);
-        return video.getPath();
+        return Pair.create(video.getPath(), playLevelQueue.poll());
     }
 
     public void offer(File video, int duration) {
+        Log.i("trace", "offer to buffer " + video.getPath());
         playQueue.offer(video);
         updateBufferSize(duration);
+    }
+
+    public void offerLevel(RepLevel level) {
+        Log.i("trace", "offer level to buffer " + level);
+        playLevelQueue.offer(level);
     }
 
     public void cleanOne(int duration) {
@@ -56,5 +68,8 @@ public class VideoBuffer {
 
     private synchronized void updateBufferSize(long delta) {
         bufferContentDuration += delta;
+        Log.i("trace", "Buffer Level: " + bufferContentDuration);
+        Log.i("perfTest", System.currentTimeMillis() + ",bufferLevel,"
+                + String.format("%.2f", (double) bufferContentDuration / BUFFER_TOTAL_DURATION));
     }
 }

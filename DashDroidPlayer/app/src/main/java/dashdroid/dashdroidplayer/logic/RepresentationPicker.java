@@ -7,11 +7,12 @@ import java.util.LinkedList;
 import java.util.List;
 
 import dashdroid.dashdroidplayer.model.Representation;
+import dashdroid.dashdroidplayer.util.Properties;
 
 public class RepresentationPicker {
-    private final static double SWITCH_PCT_BUFFER = 0.90;
+    private final static double SWITCH_PCT_BUFFER = Properties.SWITCH_PCT_BUFFER;
 
-    private final static int B_MIN = 4;
+    private final static int B_MIN = Properties.B_MIN;
     private final static double B_LOW = (int) (VideoBuffer.BUFFER_TOTAL_DURATION * 0.3);
     private final static double B_HIGH = (int) (VideoBuffer.BUFFER_TOTAL_DURATION * 0.7);
     private final static double B_OPT = (B_LOW + B_HIGH) / 2;
@@ -39,6 +40,9 @@ public class RepresentationPicker {
     }
 
     public RepLevel chooseRepresentation(int bufferLevel, double bandwidth) {
+        Log.i("trace", "Buffer Level: " + bufferLevel);
+        Log.i("trace", "Latest Bandwith: " + String.format("%.2f", bandwidth / 1000) + " kb/s");
+
         if (pastThroughputs.isEmpty() && bandwidth == 0) {
             Log.i("trace", "First segment, download LOW");
             return RepLevel.LOW;
@@ -58,6 +62,7 @@ public class RepresentationPicker {
             Log.i("trace", "Performing fast start");
             pickedRep = fastStart(bufferLevel, bandwidth);
         } else {
+            Log.i("trace", "Performing adaptation");
             pickedRep = adapt(bufferLevel, bandwidth);
         }
         lastRep = pickedRep;
@@ -75,18 +80,20 @@ public class RepresentationPicker {
             return adapt(bufferLevel, bandwidth);
         }
 
-        if (bufferLevel <= B_HIGH &&
-                repBandwidth(lastRep.higher()) < SWITCH_PCT_BUFFER * pastAverage(pastThroughputs)) {
+        if (bufferLevel > B_HIGH) {
+            try {
+                double delayDuration = bufferLevel - B_HIGH + SEGMENT_DURATION;
+                Log.i("trace", "Delay download during fast start: " + delayDuration);
+                Thread.sleep((long) (1000 * delayDuration));
+            } catch (Exception e) {
+                Log.e("trace", e.getMessage(), e);
+            }
+        }
+
+        if (repBandwidth(lastRep.higher()) <= SWITCH_PCT_BUFFER * pastAverage(pastThroughputs)) {
             return lastRep.higher();
         }
 
-        try {
-            double delayDuration = bufferLevel - B_HIGH + SEGMENT_DURATION;
-            Log.i("trace", "Delay download during fast start: " + delayDuration);
-            Thread.sleep((long) (1000 * delayDuration));
-        } catch (Exception e) {
-            Log.e("trace", e.getMessage(), e);
-        }
         return lastRep;
     }
 

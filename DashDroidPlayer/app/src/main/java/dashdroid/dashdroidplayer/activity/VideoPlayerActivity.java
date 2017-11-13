@@ -5,8 +5,10 @@ import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.util.Pair;
 import android.view.View;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.VideoView;
 
 import java.io.File;
@@ -24,11 +26,13 @@ public class VideoPlayerActivity extends AppCompatActivity {
     private RepresentationPicker repPicker;
 
     volatile boolean running;
-    private VideoBuffer buffer = new VideoBuffer();
+    private volatile VideoBuffer buffer = new VideoBuffer();
 
     String videoId;
     VideoView vidView;
     ProgressBar spinnerView;
+    TextView bandwidthMeter;
+    TextView nowPlayingLevel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,9 +41,11 @@ public class VideoPlayerActivity extends AppCompatActivity {
 
         running = true;
 
-        vidView = (VideoView)findViewById(R.id.dashPlayer);
+        vidView = (VideoView) findViewById(R.id.dashPlayer);
         spinnerView = (ProgressBar) findViewById(R.id.spinner);
         spinnerView.setVisibility(View.VISIBLE);
+        bandwidthMeter = (TextView) findViewById(R.id.bandwidthMeter);
+        nowPlayingLevel = (TextView) findViewById(R.id.nowPlaying);
 
         videoId = getIntent().getStringExtra("vidId");
         Log.i("trace", "start player for video " + videoId);
@@ -47,24 +53,24 @@ public class VideoPlayerActivity extends AppCompatActivity {
         vidView.setOnCompletionListener(new MediaPlayer.OnCompletionListener(){
             @Override
             public void onCompletion(MediaPlayer mp) {
+                Log.i("trace", "Complete segment playback");
                 if (running) {
-                    new VideoPlayer().execute();
-                    new VideoDeleter().execute();
+                    new VideoPlayer().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+                    new VideoDeleter().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
                 }
             }
         });
 
-        new MPDDownloader().execute();
+        new MPDDownloader().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     }
 
     @Override
-    public void onBackPressed() {
+    public void onDestroy() {
         buffer.cleanAll();
         running = false;
-
-        super.onBackPressed();
+        super.onDestroy();
     }
-
+    
     private volatile boolean started = false;
     private volatile int curIdx = 0;
     private volatile double latestBandwidth = 0;
@@ -96,7 +102,7 @@ public class VideoPlayerActivity extends AppCompatActivity {
             }
 
             if (running) {
-                new DashManager().execute();
+                new DashManager().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
             }
         }
     }
@@ -110,6 +116,7 @@ public class VideoPlayerActivity extends AppCompatActivity {
                         latestBandwidth
                 );
                 Representation rep = mpd.representations.get(repLevel.ordinal());
+                buffer.offerLevel(repLevel);
                 return mpd.getVideoBaseUrl() + rep.getSegmentUrl(curIdx);
             }
             return null;
@@ -117,20 +124,21 @@ public class VideoPlayerActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(String videoToDownload) {
-            if (!started && !buffer.isEmpty()) {
-                started = true;
-                new VideoPlayer().execute();
-            }
+            String bandwidthText = String.format("%.2f", latestBandwidth/1000)  + " kb/s";
+            bandwidthMeter.setText(bandwidthText);
 
             if (running) {
+                if (!started) {
+                    started = true;
+                    new VideoPlayer().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+                }
+
                 if (videoToDownload != null) {
-                    new VideoDownloader().execute(videoToDownload);
+                    new VideoDownloader().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, videoToDownload);
                 } else if (!videoFinished()) {
-                    if (!mpd.isFinishedVideo()) {
-                        new MPDDownloader().execute();
-                    } else {
-                        new DashManager().execute();
-                    }
+                    new MPDDownloader().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+                } else {
+                    bandwidthMeter.setText("Finished Buffering");
                 }
             }
         }
@@ -152,11 +160,12 @@ public class VideoPlayerActivity extends AppCompatActivity {
 
             double downloadTime = (double) (System.nanoTime() - downloadStartTime) / 1000000000;
             latestBandwidth = result.length() / downloadTime;
+            Log.i("perfTest", System.currentTimeMillis() + ",bandwidth," + String.format("%.2f", latestBandwidth / 1000));
 
             curIdx++;
 
             if (running) {
-                new DashManager().execute();
+                new DashManager().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
             } else {
                 result.delete();
             }
@@ -171,21 +180,30 @@ public class VideoPlayerActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(Void result) {
+            Log.i("trace", "Start player instance");
             if (buffer.isEmpty()) {
+                Log.i("trace", "Player: buffer empty");
                 if (videoFinished()) {
+                    Log.i("trace", "Player: video finished");
+                    nowPlayingLevel.setText("Finished Playback");
                     return;
                 } else {
+                    Log.i("trace", "Player: showing spinner");
                     spinnerView.setVisibility(View.VISIBLE);
 
+                    Log.i("perfTest", System.currentTimeMillis() + ",interrupt,1");
+
                     if (running) {
-                        new VideoPlayer().execute();
+                        new VideoPlayer().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
                     }
                 }
             } else {
-                String vidPath = buffer.poll();
-                Log.i("trace", "Start playback of " + vidPath);
+                Pair<String, RepLevel> vidPathLevel = buffer.poll();
+                Log.i("trace", "Start playback of " + vidPathLevel.first);
+                Log.i("perfTest", System.currentTimeMillis() + ",playLevel," + vidPathLevel.second);
 
-                vidView.setVideoPath(vidPath);
+                vidView.setVideoPath(vidPathLevel.first);
+                nowPlayingLevel.setText(vidPathLevel.second.toString());
                 spinnerView.setVisibility(View.GONE);
                 vidView.start();
             }
