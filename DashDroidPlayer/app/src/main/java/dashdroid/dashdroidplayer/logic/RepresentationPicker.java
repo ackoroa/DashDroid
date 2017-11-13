@@ -7,11 +7,12 @@ import java.util.LinkedList;
 import java.util.List;
 
 import dashdroid.dashdroidplayer.model.Representation;
+import dashdroid.dashdroidplayer.util.Properties;
 
 public class RepresentationPicker {
-    private final static double SWITCH_PCT_BUFFER = 0.90;
+    private final static double SWITCH_PCT_BUFFER = Properties.SWITCH_PCT_BUFFER;
 
-    private final static int B_MIN = 4;
+    private final static int B_MIN = Properties.B_MIN;
     private final static double B_LOW = (int) (VideoBuffer.BUFFER_TOTAL_DURATION * 0.3);
     private final static double B_HIGH = (int) (VideoBuffer.BUFFER_TOTAL_DURATION * 0.7);
     private final static double B_OPT = (B_LOW + B_HIGH) / 2;
