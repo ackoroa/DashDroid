@@ -14,6 +14,7 @@ import com.cs5248.team01.jobs.CompleteVideoTask;
 import com.cs5248.team01.jobs.ThreadExecutor;
 import com.cs5248.team01.persistent.DBCall;
 import com.cs5248.team01.persistent.FileManager;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 public final class Video {
 	
@@ -86,6 +87,7 @@ public final class Video {
 		
 	};
 	
+	@JsonIgnore
 	public int getNumberOfSegments() throws ClassNotFoundException, SQLException {
 		StringBuilder stmtBuilder = new StringBuilder();
 		stmtBuilder.append("select o.sequence_num ");
@@ -125,6 +127,7 @@ public final class Video {
 				});
 	}
 	
+	@JsonIgnore
 	public String getMPDPathDB() {
 		try {
 			return new DBCall().createStatement("select mpd_path from video where id = ?")
@@ -243,6 +246,7 @@ public final class Video {
 			.executeUpdate();
 	}
 
+	@JsonIgnore
 	public int getSegmentCount() throws ClassNotFoundException, SQLException {
 		return new DBCall().createStatement("select count(*) from segment where video_id = ?")
 				.setInt(this.id)
