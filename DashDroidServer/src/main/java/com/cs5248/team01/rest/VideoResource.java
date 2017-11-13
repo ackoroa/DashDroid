@@ -13,6 +13,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 
 import org.apache.log4j.Logger;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.cs5248.team01.model.JsonResponse;
@@ -123,14 +124,33 @@ public class VideoResource {
 	@POST
 	@Path("{videoId}/end")
 	@Produces(MediaType.APPLICATION_JSON)
-	public JsonResponse completeVideo(@PathParam("videoId") String videoId) {
+	@Consumes(MediaType.APPLICATION_JSON)
+	public JsonResponse completeVideo(@PathParam("videoId") String videoId, String data) {
+		logger.info("end video : " + videoId  + " data: " + data);
 		try {
 			Video video = Video.getById(Integer.parseInt(videoId));
 			if(video == null) 
 				throw new Exception("video id " + videoId + " not found.");
+			if(video.isFullVideo())
+				throw new Exception("video id " + videoId + " has already ended before.");
 			
-			video.setFullVideo(true);
-			video.update();
+			int total = -1;
+			if(data != null && !data.equals("")) {
+				try {
+					JSONObject obj = new JSONObject(data);
+					total = obj.getInt("total");
+				}
+				catch(JSONException je) {
+					logger.error(org.apache.commons.lang.exception.ExceptionUtils.getStackTrace(je));
+					return JsonResponse.failedResponse("unexpected json format");
+				}
+			}
+			else {
+				throw new Exception("please provide total number of sequence");
+			}
+			video.completeUpload(total);
+			//video.setFullVideo(true);
+			//video.update();
 			return JsonResponse.createResponse(null);
 		}
 		catch(Exception e) {
@@ -189,7 +209,7 @@ public class VideoResource {
 	
 	@GET
 	@Path("{videoId}/{representation}/{sequenceNo}")
-	@Produces("video/mp2t")
+	@Produces("video/mp4")
 	public Response getVideoSegment(
 				@PathParam("videoId") String videoId,
 				@PathParam("representation") String representation,

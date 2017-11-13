@@ -9,9 +9,9 @@ import java.io.OutputStream;
 import org.apache.commons.io.IOUtils;
 
 public class FileManager {
-	private static final String rootDirectory = "D:/myfiles/temp";
+	//private static final String rootDirectory = "D:/myfiles/temp";
 	
-	//private static final String rootDirectory = "/dashserver";
+	private static final String rootDirectory = "/dashserver";
 	private static int READ_SIZE = 8 * 1024;
 	
 	public static String getMPDFilePath(int videoId, String previousPath) {

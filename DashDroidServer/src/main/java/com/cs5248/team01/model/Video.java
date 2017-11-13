@@ -10,6 +10,8 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 
+import com.cs5248.team01.jobs.CompleteVideoTask;
+import com.cs5248.team01.jobs.ThreadExecutor;
 import com.cs5248.team01.persistent.DBCall;
 import com.cs5248.team01.persistent.FileManager;
 
@@ -85,25 +87,71 @@ public final class Video {
 	};
 	
 	public int getNumberOfSegments() throws ClassNotFoundException, SQLException {
-		return new DBCall().createStatement("select max(r.seq) result from (select segment_type, max(sequence_num) seq from segment where video_id = ? group by segment_type) r")
+		StringBuilder stmtBuilder = new StringBuilder();
+		stmtBuilder.append("select o.sequence_num ");
+		stmtBuilder.append("from segment o ");
+		stmtBuilder.append("INNER JOIN segment l on l.sequence_num = o.sequence_num and l.video_id = o.video_id and l.segment_type = ? ");
+		stmtBuilder.append("INNER JOIN segment m on m.sequence_num = o.sequence_num and m.video_id = o.video_id and m.segment_type = ? ");
+		stmtBuilder.append("INNER JOIN segment h on h.sequence_num = o.sequence_num and h.video_id = o.video_id and h.segment_type = ? ");
+		stmtBuilder.append("WHERE o.video_id = ? and o.segment_type = ? ");
+		stmtBuilder.append("order by sequence_num");
+		return new DBCall().createStatement(stmtBuilder.toString())
+				.setChar(Segment.SEGMENT_TYPE_240)
+				.setChar(Segment.SEGMENT_TYPE_360)
+				.setChar(Segment.SEGMENT_TYPE_480)
 				.setInt(this.id)
+				.setChar(Segment.SEGMENT_TYPE_ORIGINAL)
 				.executeQuery(new DBCall.ResultSetMapper<Integer>() {
 
 					@Override
 					public Integer map(ResultSet rs) throws SQLException, RuntimeException {
-						if(!rs.next()){
+						int result = -1;
+						while(rs.next()) {
+							if(result == -1)
+								result = rs.getInt(1);
+							else {
+								int value = rs.getInt(1);
+								if(result == value - 1)
+									result = value;
+								else
+									break;
+							}
+						}
+						if(result == -1){
 							throw new RuntimeException("no sequence found");
 						}
-						return rs.getInt("result");
+						return result;
 					}
 				});
+	}
+	
+	public String getMPDPathDB() {
+		try {
+			return new DBCall().createStatement("select mpd_path from video where id = ?")
+					.setInt(this.id)
+					.executeQuery(new DBCall.ResultSetMapper<String>() {
+
+						@Override
+						public String map(ResultSet rs) throws SQLException, RuntimeException {
+							if(rs.next()) {
+								return rs.getString(COLUMN_MPD_PATH);
+							}
+							return "";
+						}
+						
+					});
+			
+		}
+		catch(Exception e) {
+			return "";
+		}
 	}
 	
 	private static final String FULL_VIDEO_TRUE = "T";
 	private static final String FULL_VIDEO_FALSE = "F";
 	
 	private static final String INSERT_STATEMENT = "INSERT INTO video (name, is_full_video, creation_datetime, last_modified_datetime) values (?, ?, now(), now())";
-	private static final String UPDATE_STATEMENT = "UPDATE video SET name = ?, is_full_video = ?, description = ?, last_modified_datetime = now() where id = ?";
+	private static final String UPDATE_STATEMENT = "UPDATE video SET name = ?, description = ?, last_modified_datetime = now() where id = ?";
 	
 	private final int id;
 	private String name;
@@ -168,7 +216,6 @@ public final class Video {
 		logger.debug("[" + this.name + "][" + this.isFullVideo + "][" + this.description + "][" + this.mpdPath + "]");
 		new DBCall().createStatement(UPDATE_STATEMENT)
 			.setString(this.name)
-			.setString(this.isFullVideo ? FULL_VIDEO_TRUE : FULL_VIDEO_FALSE)
 			.setString(this.description)
 			.setInt(this.id)
 			.executeUpdate();
@@ -180,6 +227,35 @@ public final class Video {
 			.setString(this.mpdPath)
 			.setInt(this.id)
 			.executeUpdate();
+	}
+
+	public void completeUpload(int sequenceCount) throws Exception {
+		if(sequenceCount <= 0)
+			throw new Exception("invalid sequence total: " + sequenceCount);
+		ThreadExecutor.submitTask(new CompleteVideoTask(this, sequenceCount));
+		
+	}
+	
+	public void updateIsFullVideo() throws ClassNotFoundException, SQLException {
+		new DBCall().createStatement("UPDATE video set is_full_video = ? where id = ?")
+			.setString(this.isFullVideo ? FULL_VIDEO_TRUE : FULL_VIDEO_FALSE)
+			.setInt(this.id)
+			.executeUpdate();
+	}
+
+	public int getSegmentCount() throws ClassNotFoundException, SQLException {
+		return new DBCall().createStatement("select count(*) from segment where video_id = ?")
+				.setInt(this.id)
+				.executeQuery(new DBCall.ResultSetMapper<Integer>() {
+
+					@Override
+					public Integer map(ResultSet rs) throws SQLException, RuntimeException {
+						if(rs.next()) {
+							return rs.getInt(1);
+						}
+						return 0;
+					}
+				});
 	}
 
 	

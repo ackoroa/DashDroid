@@ -21,11 +21,14 @@ public class MPDTask implements Runnable {
 		try {
 			MPD mpd = new MPD(this.video);
 			
-			String filePath = FileManager.getMPDFilePath(this.video.getId(), this.video.getMPDPath());
-			mpd.writeXML(filePath);
-			
-			this.video.setMPDPath(filePath);
-			this.video.updateMPDPath();
+			String filePath = FileManager.getMPDFilePath(this.video.getId(), this.video.getMPDPathDB());
+			if(mpd.writeXML(filePath)) {
+				this.video.setMPDPath(filePath);
+				this.video.updateMPDPath();
+			}
+			else {
+				throw new Exception("Unable to write MPD");
+			}
 		} catch (ClassNotFoundException e) {
 			logger.error("Unable to save mpd of video: " + this.video.getId());
 			logger.error(org.apache.commons.lang.exception.ExceptionUtils.getStackTrace(e));
