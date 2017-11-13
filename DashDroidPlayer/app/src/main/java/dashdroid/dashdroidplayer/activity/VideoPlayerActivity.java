@@ -21,6 +21,7 @@ import dashdroid.dashdroidplayer.model.Representation;
 import dashdroid.dashdroidplayer.util.FileUtils;
 import dashdroid.dashdroidplayer.R;
 import dashdroid.dashdroidplayer.model.MPD;
+import dashdroid.dashdroidplayer.util.Properties;
 
 public class VideoPlayerActivity extends AppCompatActivity {
     private RepresentationPicker repPicker;
@@ -70,7 +71,7 @@ public class VideoPlayerActivity extends AppCompatActivity {
         running = false;
         super.onDestroy();
     }
-    
+
     private volatile boolean started = false;
     private volatile int curIdx = 0;
     private volatile double latestBandwidth = 0;
@@ -99,6 +100,9 @@ public class VideoPlayerActivity extends AppCompatActivity {
                         mpd.representations,
                         mpd.getSegmentDuration()
                 );
+                if (!mpd.isFinishedVideo()) {
+                    curIdx = mpd.getLastSegmentIdx() - Properties.LIVE_OFFSET;
+                }
             }
 
             if (running) {

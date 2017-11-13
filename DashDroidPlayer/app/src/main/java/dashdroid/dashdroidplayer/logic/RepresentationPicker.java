@@ -20,7 +20,7 @@ public class RepresentationPicker {
     private List<Integer> REP_BANDWIDTHS;
     private int SEGMENT_DURATION;
 
-    private final static int PAST_WINDOW_SIZE = 5;
+    private final static int PAST_WINDOW_SIZE = Properties.PAST_WINDOW_SIZE;
     private List<Double> pastThroughputs;
     private List<Integer> pastBufferLevels;
 
