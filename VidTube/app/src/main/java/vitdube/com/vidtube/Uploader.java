@@ -65,31 +65,17 @@ public class Uploader implements View.OnClickListener {
         writableDb = dbHelper.getWritableDatabase();
     }
 
-    private List<VideoClip> getVideoClips() {
-        Cursor cursor = readableDb.rawQuery("SELECT * FROM " + VideoClipContract.VideoClip.TABLE_NAME
-        + " WHERE " + VideoClipContract.VideoClip.COLUMN_NAME_TITLE
-        + " = '" + videoName
-        + "' AND " + VideoClipContract.VideoClip.COLUMN_NAME_UPLOADED
-        + " = 0", null);
-
-        List<VideoClip> clips = new ArrayList<>();
-
-        while(cursor.moveToNext()) {
-            VideoClip clip = new VideoClip();
-            clip.setChunkId(cursor.getInt(cursor.getColumnIndexOrThrow(VideoClipContract.VideoClip.COLUMN_NAME_CHUNK_ID)));
-            clip.setFilePath(cursor.getString(cursor.getColumnIndexOrThrow(VideoClipContract.VideoClip.COLUMN_NAME_FILEPATH)));
-            clips.add(clip);
-        }
-        return clips;
-    }
-
     @Override
     public void onClick(View view) {
         Log.i("Uploader", "Click received.");
-        this.clipsToUpload = getVideoClips();
+        this.clipsToUpload = dbHelper.getVideoClipsByName(readableDb, videoName);
         this.clipsUploaded = 0;
+
+        dbHelper.updateDBClipToUploadStatus(writableDb, videoName, true);
+
         Toast.makeText(this.context, "Uploading "
                 + videoName + ". Clips: " + String.valueOf(clipsToUpload.size()), Toast.LENGTH_SHORT).show();
+
         this.buttonView = (Button) view;
         updateButtonToUpdating();
         initNewVideo();
@@ -153,6 +139,7 @@ public class Uploader implements View.OnClickListener {
                 httpConn.setRequestMethod("GET");
                 httpConn.setRequestProperty("Accept","*/*");
                 httpConn.setRequestProperty("Content-type", "application/json");
+                httpConn.setChunkedStreamingMode(0);
 
                 InputStream in = new BufferedInputStream(httpConn.getInputStream());
 
@@ -192,6 +179,8 @@ public class Uploader implements View.OnClickListener {
                 }
                 setId(Integer.valueOf(result));
                 Toast.makeText(context, "Inited new video with id:" + result, Toast.LENGTH_SHORT).show();
+
+                dbHelper.updateDBClipVideoId(writableDb, videoName, Integer.valueOf(result));
 
                 if (clipsToUpload.size() < 1) {
                     endVideo();
@@ -243,6 +232,7 @@ public class Uploader implements View.OnClickListener {
                 httpConn.setRequestMethod("POST");
                 httpConn.setRequestProperty("Accept", "*/*");
                 httpConn.setRequestProperty("Content-type", contentType);
+                httpConn.setChunkedStreamingMode(0);
 
                 OutputStream outputStream = httpConn.getOutputStream();
                 FileInputStream inputStream = new FileInputStream(new File(filePath));
@@ -291,19 +281,37 @@ public class Uploader implements View.OnClickListener {
             void onPostTask(Boolean result) {
                 if (result == false) {
                     updateButtonToUpdate();
-                    updateDBClipUploadStatus(filePath, false);
+                    dbHelper.updateDBClipUploadStatus(writableDb, filePath, false);
                     Toast.makeText(context, "Failed to upload video clip " + sequenceNumber, Toast.LENGTH_SHORT).show();
                     return;
                 }
-                updateDBClipUploadStatus(filePath, true);
+                dbHelper.updateDBClipUploadStatus(writableDb, filePath, true);
                 Toast.makeText(context, "Uploaded video clip " + sequenceNumber, Toast.LENGTH_SHORT).show();
                 clipsUploaded++;
+                Toast.makeText(context, "Uploaded " + clipsUploaded + "/" + clipsToUpload.size()
+                        , Toast.LENGTH_SHORT).show();
                 if (clipsToUpload.size() == clipsUploaded) {
+                    Toast.makeText(context, "End video!", Toast.LENGTH_SHORT).show();
                     endVideo();
                 }
             }
         });
         uploadTask.execute(new String[]{videoId.toString(), filePath, sequenceNumber.toString()});
+    }
+
+    public void uploadFailedClips() {
+        List<VideoClip> clips = dbHelper.getVideoClipsByIncompleteUpload(writableDb);
+        for (final VideoClip clip : clips) {
+            uploadSingleClip(String.valueOf(clip.getVideoId()),
+                    clip.getChunkId(),
+                    clip.getFilePath(),
+                    new PostTaskListener<Boolean>() {
+                        @Override
+                        void onPostTask(Boolean result) {
+                            dbHelper.updateDBClipUploadStatus(writableDb, clip.getFilePath(), true);
+                        }
+                    });
+        }
     }
 
     public static void initNewVideo(String videoName, PostTaskListener<String> listener) {
@@ -341,6 +349,7 @@ public class Uploader implements View.OnClickListener {
                 httpConn.setRequestMethod("POST");
                 httpConn.setRequestProperty("Accept","*/*");
                 httpConn.setRequestProperty("Content-type", "application/json");
+                httpConn.setChunkedStreamingMode(0);
 
                 InputStream in = new BufferedInputStream(httpConn.getInputStream());
 
@@ -392,12 +401,8 @@ public class Uploader implements View.OnClickListener {
 
     }
 
-    private void updateDBClipUploadStatus(String filePath, boolean uploaded) {
-        writableDb.execSQL("UPDATE " + VideoClipContract.VideoClip.TABLE_NAME
-                + " SET " + VideoClipContract.VideoClip.COLUMN_NAME_UPLOADED
-                + " = " + (uploaded ? "1" : "0")
-                + " WHERE " + VideoClipContract.VideoClip.COLUMN_NAME_FILEPATH
-                + "= '" + filePath + "'");
+    private void updateDBClipToUpload(String videoName, boolean toUpload) {
+        dbHelper.updateDBClipToUploadStatus(writableDb, videoName, toUpload);
     }
 
 }

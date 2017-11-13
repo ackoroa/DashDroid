@@ -15,5 +15,7 @@ public class VideoClipContract {
         public static final String COLUMN_NAME_FILEPATH = "filePath";
         public static final String COLUMN_NAME_CHUNK_ID = "chunkId";
         public static final String COLUMN_NAME_UPLOADED = "uploaded";
+        public static final String COLUMN_NAME_TOUPLOAD = "toUpload";
+        public static final String COLUMN_NAME_VIDEO_ID = "videoId";
     }
 }

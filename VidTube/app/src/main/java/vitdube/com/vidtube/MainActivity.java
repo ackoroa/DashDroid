@@ -133,8 +133,7 @@ public class MainActivity extends AppCompatActivity {
                     recorderCtrl.initVideoPrefix();
                     recorderCtrl.initRecorder();
                     recordingButton.setText("Stop Recording");
-//                    recorderCtrl.prepareRecorder();
-//                    recorderCtrl.startRecording();
+                    recorderCtrl.startRecording();
 
                 } else {
                     recordingButton.setText("Start Recording");
