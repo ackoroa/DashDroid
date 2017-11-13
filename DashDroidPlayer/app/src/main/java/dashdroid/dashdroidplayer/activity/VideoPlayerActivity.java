@@ -104,7 +104,7 @@ public class VideoPlayerActivity extends AppCompatActivity {
     private class DashManager extends AsyncTask<Void, Void, String> {
         @Override
         protected String doInBackground(Void... params) {
-            if (curIdx <= mpd.getLastSegmentIdx()) {
+            if (curIdx < mpd.getLastSegmentIdx()) {
                 RepLevel repLevel = repPicker.chooseRepresentation(
                         buffer.getBufferContentDuration(),
                         latestBandwidth
@@ -183,6 +183,7 @@ public class VideoPlayerActivity extends AppCompatActivity {
                 }
             } else {
                 String vidPath = buffer.poll();
+                Log.i("trace", "Start playback of " + vidPath);
 
                 vidView.setVideoPath(vidPath);
                 spinnerView.setVisibility(View.GONE);
