@@ -58,6 +58,7 @@ public class RepresentationPicker {
             Log.i("trace", "Performing fast start");
             pickedRep = fastStart(bufferLevel, bandwidth);
         } else {
+            Log.i("trace", "Performing adaptation");
             pickedRep = adapt(bufferLevel, bandwidth);
         }
         lastRep = pickedRep;
@@ -75,18 +76,20 @@ public class RepresentationPicker {
             return adapt(bufferLevel, bandwidth);
         }
 
-        if (bufferLevel <= B_HIGH &&
-                repBandwidth(lastRep.higher()) < SWITCH_PCT_BUFFER * pastAverage(pastThroughputs)) {
+        if (bufferLevel > B_HIGH) {
+            try {
+                double delayDuration = bufferLevel - B_HIGH + SEGMENT_DURATION;
+                Log.i("trace", "Delay download during fast start: " + delayDuration);
+                Thread.sleep((long) (1000 * delayDuration));
+            } catch (Exception e) {
+                Log.e("trace", e.getMessage(), e);
+            }
+        }
+
+        if (repBandwidth(lastRep.higher()) <= SWITCH_PCT_BUFFER * pastAverage(pastThroughputs)) {
             return lastRep.higher();
         }
 
-        try {
-            double delayDuration = bufferLevel - B_HIGH + SEGMENT_DURATION;
-            Log.i("trace", "Delay download during fast start: " + delayDuration);
-            Thread.sleep((long) (1000 * delayDuration));
-        } catch (Exception e) {
-            Log.e("trace", e.getMessage(), e);
-        }
         return lastRep;
     }
 

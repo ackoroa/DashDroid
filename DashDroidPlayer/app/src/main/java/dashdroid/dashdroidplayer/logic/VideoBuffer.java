@@ -1,13 +1,16 @@
 package dashdroid.dashdroidplayer.logic;
 
+import android.util.Log;
+
 import java.io.File;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import dashdroid.dashdroidplayer.util.FileUtils;
+import dashdroid.dashdroidplayer.util.Properties;
 
 public class VideoBuffer {
-    public final static int BUFFER_TOTAL_DURATION = 30;
+    public final static int BUFFER_TOTAL_DURATION = Properties.BUFFER_TOTAL_DURATION;
     private volatile int bufferContentDuration = 0;
 
     private volatile Queue<File> playQueue = new ConcurrentLinkedQueue<>();
@@ -27,11 +30,13 @@ public class VideoBuffer {
 
     public String poll() {
         File video = playQueue.poll();
+        Log.i("trace", "poll from buffer " + video.getPath());
         delQueue.offer(video);
         return video.getPath();
     }
 
     public void offer(File video, int duration) {
+        Log.i("trace", "offer to buffer " + video.getPath());
         playQueue.offer(video);
         updateBufferSize(duration);
     }

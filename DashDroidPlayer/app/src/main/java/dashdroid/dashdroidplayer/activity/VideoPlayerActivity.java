@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.VideoView;
 
 import java.io.File;
@@ -24,11 +25,12 @@ public class VideoPlayerActivity extends AppCompatActivity {
     private RepresentationPicker repPicker;
 
     volatile boolean running;
-    private VideoBuffer buffer = new VideoBuffer();
+    private volatile VideoBuffer buffer = new VideoBuffer();
 
     String videoId;
     VideoView vidView;
     ProgressBar spinnerView;
+    TextView bandwidthMeter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,9 +39,10 @@ public class VideoPlayerActivity extends AppCompatActivity {
 
         running = true;
 
-        vidView = (VideoView)findViewById(R.id.dashPlayer);
+        vidView = (VideoView) findViewById(R.id.dashPlayer);
         spinnerView = (ProgressBar) findViewById(R.id.spinner);
         spinnerView.setVisibility(View.VISIBLE);
+        bandwidthMeter = (TextView) findViewById(R.id.bandwidthMeter);
 
         videoId = getIntent().getStringExtra("vidId");
         Log.i("trace", "start player for video " + videoId);
@@ -117,20 +120,21 @@ public class VideoPlayerActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(String videoToDownload) {
-            if (!started && !buffer.isEmpty()) {
-                started = true;
-                new VideoPlayer().execute();
-            }
+            String bandwidthText = String.format("%.2f", latestBandwidth/1000)  + " kb/s";
+            bandwidthMeter.setText(bandwidthText);
 
             if (running) {
+                if (!started) {
+                    started = true;
+                    new VideoPlayer().execute();
+                }
+
                 if (videoToDownload != null) {
                     new VideoDownloader().execute(videoToDownload);
                 } else if (!videoFinished()) {
-                    if (!mpd.isFinishedVideo()) {
-                        new MPDDownloader().execute();
-                    } else {
-                        new DashManager().execute();
-                    }
+                    new MPDDownloader().execute();
+                } else {
+                    bandwidthMeter.setText("0 kb/s");
                 }
             }
         }
@@ -171,10 +175,14 @@ public class VideoPlayerActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(Void result) {
+            Log.i("trace", "Start player instance");
             if (buffer.isEmpty()) {
+                Log.i("trace", "Player: buffer empty");
                 if (videoFinished()) {
+                    Log.i("trace", "Player: video finished");
                     return;
                 } else {
+                    Log.i("trace", "Player: showing spinner");
                     spinnerView.setVisibility(View.VISIBLE);
 
                     if (running) {

@@ -22,6 +22,8 @@ public class FileUtils {
 
             FileOutputStream writer = new FileOutputStream(file);
             writer.getChannel().transferFrom(rbc, 0, Long.MAX_VALUE);
+
+            Thread.sleep((int) (Properties.dlThrottleDuration() * 1000));
         } catch (Exception e) {
             Log.e("trace", e.getMessage(), e);
         }
