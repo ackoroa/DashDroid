@@ -76,8 +76,9 @@ public class Segmenter {
                             .overwriteOutput()
                             .inputPath(originFilePath)
                             .outputPath(segFilePath)
-                            .customCommand("-ss " + segmentIdx * SEGMENT_LENGTH_MS/1000
-                                    + " -t " + (segmentIdx + 1) * SEGMENT_LENGTH_MS/1000)
+                            .customCommand(
+                                    " -ss " + segmentIdx * SEGMENT_LENGTH_MS/1000
+                                    + " -t " + SEGMENT_LENGTH_MS/1000)
                             .copyVideoCodec()
                             .build();
                     VideoProcessingResult result = command.execute();

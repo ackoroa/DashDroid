@@ -16,7 +16,8 @@
 
     <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:keepScreenOn="true">
 
         <Button
             android:id="@+id/button4"
@@ -57,6 +58,14 @@
             android:layout_toStartOf="@+id/button4"
             android:checked="false"
             android:text="Live!"/>
+
+        <Button
+            android:id="@+id/server_list_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_toEndOf="@+id/button"
+            android:text="View Server Clips"/>
 
     </RelativeLayout>
 
