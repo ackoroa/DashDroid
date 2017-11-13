@@ -41,7 +41,7 @@ public class FileUtils {
         Uri vidUri = Uri.parse(url);
 
         try {
-            String fileName = vidUri.getLastPathSegment();
+            String fileName = vidUri.getLastPathSegment() + ".ts";
             Log.i("trace", "Creating file " + fileName);
             file = File.createTempFile(fileName, null, context.getFilesDir());
             Log.i("trace", "File created at " + file.getPath());

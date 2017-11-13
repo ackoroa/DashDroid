@@ -26,9 +26,7 @@ public class MPD {
     public List<Representation> representations;
 
     public static String getSourceUrl(String videoId) {
-        return "https://raw.githubusercontent.com/ackoroa/DashDroid/master/DashDroidPlayer/app/src/test/resources/sample.mpd" +
-                "?token=ACZVKdKVAApM9iMpsbOLo9gMbGvm5ac7ks5aC-q_wA%3D%3D";
-        //return BASE_URL + videoId + "/MPD";
+        return BASE_URL + videoId + "/MPD";
     }
 
     @JsonProperty
