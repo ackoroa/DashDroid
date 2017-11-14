@@ -12,9 +12,11 @@ public class Properties {
     public final static int B_MIN = 4;
     public final static double SWITCH_PCT_BUFFER = 0.90;
     public final static int PAST_WINDOW_SIZE = 5;
+    public static final double PLAYER_BUFFERING_DELAY = 0.2;
 
     // live stream parameters
-    public final static int LIVE_OFFSET = 1;
+    public final static int LIVE_OFFSET = 4;
+    public static final double CHECK_MPD_DELAY = 1;
 
     // artificial download delays for testing
     private static double DELAY_MEAN = 0;
