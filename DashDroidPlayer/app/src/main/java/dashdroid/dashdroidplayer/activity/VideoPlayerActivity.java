@@ -128,7 +128,8 @@ public class VideoPlayerActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(String videoToDownload) {
-            String bandwidthText = String.format("%.2f", latestBandwidth/1000)  + " kb/s";
+            String bandwidthText = String.format("%.2f", latestBandwidth/1000)  + " kb/s ("
+                    + String.format("%.2f", buffer.getFillRatio()) + " buffer)";
             bandwidthMeter.setText(bandwidthText);
 
             if (running) {
@@ -140,6 +141,11 @@ public class VideoPlayerActivity extends AppCompatActivity {
                 if (videoToDownload != null) {
                     new VideoDownloader().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, videoToDownload);
                 } else if (!videoFinished()) {
+                    try {
+                        Thread.sleep((long) (Properties.CHECK_MPD_DELAY * 1000));
+                    } catch (InterruptedException e) {
+                        Log.e("trace", e.getMessage(), e);
+                    }
                     new MPDDownloader().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
                 } else {
                     bandwidthMeter.setText("Finished Buffering");
@@ -196,6 +202,11 @@ public class VideoPlayerActivity extends AppCompatActivity {
                     spinnerView.setVisibility(View.VISIBLE);
 
                     Log.i("perfTest", System.currentTimeMillis() + ",interrupt,1");
+                    try {
+                        Thread.sleep((long) (Properties.PLAYER_BUFFERING_DELAY * 1000));
+                    } catch (InterruptedException e) {
+                        Log.e("trace", e.getMessage(), e);
+                    }
 
                     if (running) {
                         new VideoPlayer().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
