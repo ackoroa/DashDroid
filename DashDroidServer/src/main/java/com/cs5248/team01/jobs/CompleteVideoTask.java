@@ -1,16 +1,9 @@
 package com.cs5248.team01.jobs;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-
 import org.apache.log4j.Logger;
 
-import com.cs5248.team01.model.Segment;
 import com.cs5248.team01.model.Video;
+import com.cs5248.team01.persistent.DBCall;
 
 public class CompleteVideoTask implements Runnable {
 
@@ -46,35 +39,7 @@ public class CompleteVideoTask implements Runnable {
 				this.video.updateIsFullVideo();
 				ThreadExecutor.submitTask(new MPDTask(this.video));
 				
-				ExecutorService es = null;
-				List<Segment> segmentList = Segment.getSegmentByVideoIdSegmentType(this.video.getId(), Segment.SEGMENT_TYPE_ORIGINAL);
-				try {
-					es = Executors.newFixedThreadPool(3 * segmentList.size() + 1);
-					List<Callable<Object>> transcodes = new ArrayList<Callable<Object>>();
-					
-					for(Segment s : segmentList) {
-						for(char c: new char[] {Segment.SEGMENT_TYPE_HLS_240, Segment.SEGMENT_TYPE_HLS_360, Segment.SEGMENT_TYPE_HLS_480}) {
-							TranscoderTask task = new TranscoderTask(
-									s.getVideoId(),
-									s.getFilePath(),
-									s.getRepFilePath(c),
-									c,
-									s.getSequenceNum());
-							transcodes.add(Executors.callable(task));
-						}
-					}
-					
-					//this line will execute all the task and wait for them to return
-					List<Future<Object>> result = es.invokeAll(transcodes);
-					
-					es.submit(new HLSTask(this.video));
-				}
-				catch(Exception e) {
-					
-				}
-				finally {
-					
-				}
+				//submit for hls transcoding and generation of playlist here
 			}
 			else {
 				throw new Exception("video transcoding job error.");

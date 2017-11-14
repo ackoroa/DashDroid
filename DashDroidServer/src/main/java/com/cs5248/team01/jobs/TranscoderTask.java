@@ -31,15 +31,31 @@ public class TranscoderTask implements Runnable {
 	public void run() {
 		logger.info("Transcoder task run");
 		try {
-			String[] h240 = { "ffmpeg", "-i", this.filePath, "-vcodec", "libx264", "-profile:v", "main", "-level:v", "3.0", "-acodec", "aac", "-b:v", "700K",
-					"-b:a", "64K", "-vf", "scale=426:240", "-f", "mpegts", "-strict", "-2",this.targetPath, "-loglevel", "quiet" };
-
-			String[] h360 = { "ffmpeg", "-i", this.filePath, "-vcodec", "libx264", "-profile:v", "main", "-level:v", "3.0", "-acodec", "aac", "-b:v", "1M",
-					"-b:a", "128k", "-vf", "scale=640:360", "-f", "mpegts", "-strict", "-2",this.targetPath, "-loglevel", "quiet" };
-
-			String[] h480 = { "ffmpeg", "-i", this.filePath, "-vcodec", "libx264", "-profile:v", "main", "-level:v", "3.0", "-acodec", "aac", "-b:v", "2M",
-					"-b:a", "128k", "-vf", "scale=854:480", "-f", "mpegts", "-strict", "-2", this.targetPath, "-loglevel", "quiet" };
-			
+			// String[] c240 = {"ffmpeg", "-i", this.filePath, "-vcodec",
+			// "mpeg2video", "-acodec", "mp2",
+			// "-b:v", "700K", "-b:a", "64K", "-vf", "scale=426:240", "-f",
+			// "mpegts",
+			// this.targetPath, "-loglevel", "quiet"};
+			//
+			// String[] c360 = {"ffmpeg", "-i", this.filePath, "-vcodec",
+			// "mpeg2video", "-acodec", "mp2",
+			// "-b:v", "1M", "-b:a", "128k", "-vf", "scale=640:360", "-f",
+			// "mpegts",
+			// this.targetPath, "-loglevel", "quiet"};
+			//
+			// String[] c480 = {"ffmpeg", "-i", this.filePath, "-vcodec",
+			// "mpeg2video", "-acodec", "mp2",
+			// "-b:v", "2M", "-b:a", "128k", "-vf", "scale=854:480", "-f",
+			// "mpegts",
+			// this.targetPath, "-loglevel", "quiet"};
+//			String[] c240 = { "ffmpeg", "-i", this.filePath, "-vcodec", "libx264", "-acodec", "aac", "-b:v", "700K",
+//					"-b:a", "64K", "-vf", "scale=426:240", "-f", "mpegts", "-strict", "-2",this.targetPath, "-loglevel", "quiet" };
+//
+//			String[] c360 = { "ffmpeg", "-i", this.filePath, "-vcodec", "libx264", "-acodec", "aac", "-b:v", "1M",
+//					"-b:a", "128k", "-vf", "scale=640:360", "-f", "mpegts", "-strict", "-2",this.targetPath, "-loglevel", "quiet" };
+//
+//			String[] c480 = { "ffmpeg", "-i", this.filePath, "-vcodec", "libx264", "-acodec", "aac", "-b:v", "2M",
+//					"-b:a", "128k", "-vf", "scale=854:480", "-f", "mpegts", "-strict", "-2", this.targetPath, "-loglevel", "quiet" };
 			String[] c240 = { "ffmpeg", "-i", this.filePath, "-vcodec", "libx264", "-acodec", "aac", "-b:v", "700K",
 					"-b:a", "64K", "-vf", "scale=426:240", "-f", "mp4", "-strict", "-2",this.targetPath, "-loglevel", "quiet" };
 
@@ -47,8 +63,7 @@ public class TranscoderTask implements Runnable {
 					"-b:a", "128k", "-vf", "scale=640:360", "-f", "mp4", "-strict", "-2",this.targetPath, "-loglevel", "quiet" };
 
 			String[] c480 = { "ffmpeg", "-i", this.filePath, "-vcodec", "libx264", "-acodec", "aac", "-b:v", "2M",
-					"-b:a", "128k", "-vf", "scale=854:480", "-f", "mp4", "-strict", "-2", this.targetPath, "-loglevel", "quiet" };
-			
+					"-b:a", "128k", "-vf", "scale=854:480", "-f", "mp4", "-strict", "-2", this.targetPath, "-loglevel", "quiet" };			
 			switch (segmentType) {
 			case Segment.SEGMENT_TYPE_240:
 				transcodeProcess(c240);
@@ -58,15 +73,6 @@ public class TranscoderTask implements Runnable {
 				break;
 			case Segment.SEGMENT_TYPE_480:
 				transcodeProcess(c480);
-				break;
-			case Segment.SEGMENT_TYPE_HLS_240:
-				transcodeProcess(h240);
-				break;
-			case Segment.SEGMENT_TYPE_HLS_360:
-				transcodeProcess(h360);
-				break;
-			case Segment.SEGMENT_TYPE_HLS_480:
-				transcodeProcess(h480);
 				break;
 			default:
 				throw new Exception("unknown segment type");

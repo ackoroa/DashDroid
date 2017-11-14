@@ -10,8 +10,7 @@ import dashdroid.dashdroidplayer.util.JsonUtil;
 
 
 public class MPD {
-    //private static final String BASE_URL = "http://monterosa.d2.comp.nus.edu.sg:32768/dash-server/rest/video/";
-    private static final String BASE_URL = "http://192.168.1.5:8080/dash-server/rest/video/";
+    private static final String BASE_URL = "http://monterosa.d2.comp.nus.edu.sg:32768/dash-server/rest/video/";
     public enum VideoType { STATIC, DYNAMIC }
 
     @JsonProperty

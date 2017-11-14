@@ -2,9 +2,7 @@ package com.cs5248.team01.model;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 
 import org.apache.log4j.Logger;
 
@@ -20,9 +18,6 @@ public class Segment {
 	public static final char SEGMENT_TYPE_240 = 'L';  //low
 	public static final char SEGMENT_TYPE_360 = 'M';  //medium
 	public static final char SEGMENT_TYPE_480 = 'H';  //high
-	public static final char SEGMENT_TYPE_HLS_240 = 'X';
-	public static final char SEGMENT_TYPE_HLS_360 = 'Y';
-	public static final char SEGMENT_TYPE_HLS_480 = 'Z';
 	
 	public int id;
 	private Video video;
@@ -70,35 +65,6 @@ public class Segment {
 		return segmentId;
 	}
 	
-	public static List<Segment> getSegmentByVideoIdSegmentType(int videoId, char segmentType) throws ClassNotFoundException, SQLException {
-		logger.info("getting segment list for video: " + videoId + " segmentType: " + segmentType);
-		
-		return new DBCall().createStatement("SELECT * FROM segment where video_id = ? and segment_type = ? order by sequence_num")
-				.setInt(videoId)
-				.setChar(segmentType)
-				.executeQuery(new DBCall.ResultSetMapper<List<Segment>>() {
-
-					@Override
-					public List<Segment> map(ResultSet rs) throws SQLException, RuntimeException {
-						List<Segment> results = new ArrayList<Segment>();
-						while(rs.next()) {
-							int id = rs.getInt(COLUMN_ID);
-							Segment segment = new Segment(id);
-							segment.setVideoId(rs.getInt(COLUMN_VIDEO_ID));
-							segment.setFilePath(rs.getString(COLUMN_FILE_PATH));
-							segment.setSequenceNum(rs.getInt(COLUMN_SEQUENCE_NUM));
-							segment.setSegmentType(rs.getString(COLUMN_SEGMENT_TYPE).charAt(0));
-							segment.setCreationDateTime(rs.getDate(COLUMN_CREATION_DATETIME));
-							segment.setLastModifiedDateTime(rs.getDate(COLUMN_LAST_MODIFIED_DATETIME));
-							segment.getVideo();
-							results.add(segment);
-						}
-						return results;
-					}
-					
-				});
-	}
-	
 	private static final DBCall.ResultSetMapper<Segment> oneResultMapper = new DBCall.ResultSetMapper<Segment>() {
 
 		@Override
@@ -141,12 +107,6 @@ public class Segment {
 				return filePath + "_360.mp4";
 			case SEGMENT_TYPE_480:
 				return filePath + "_480.mp4";
-			case SEGMENT_TYPE_HLS_240:
-				return filePath + "_hls_240.ts";
-			case SEGMENT_TYPE_HLS_360:
-				return filePath + "_hls_360.ts";
-			case SEGMENT_TYPE_HLS_480:
-				return filePath + "_hls_480.ts";
 			default:
 				return "";
 		}

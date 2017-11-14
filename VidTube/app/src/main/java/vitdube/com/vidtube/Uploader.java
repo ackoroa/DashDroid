@@ -54,8 +54,7 @@ public class Uploader implements View.OnClickListener {
     Video video;
     CustomArrayAdapter adapter;
 
-    //public static final String ENDPOINT = "http://monterosa.d2.comp.nus.edu.sg:32768/dash-server/rest";
-    public static final String ENDPOINT = "http://192.168.1.5:8080/dash-server/rest";
+    public static final String ENDPOINT = "http://monterosa.d2.comp.nus.edu.sg:32768/dash-server/rest";
 
     public Uploader(Context context, String videoName, Video video) {
         this.context = context;
@@ -356,7 +355,7 @@ public class Uploader implements View.OnClickListener {
 
                 try {
                     DataOutputStream printout = new DataOutputStream(httpConn.getOutputStream ());
-                    printout.writeBytes(json.toString());
+                    printout.writeBytes(jsonParam.toString());
                     printout.flush ();
                     printout.close ();
                 } catch(Exception e) {

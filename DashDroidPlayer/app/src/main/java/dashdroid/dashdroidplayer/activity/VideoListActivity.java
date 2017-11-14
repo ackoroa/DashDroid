@@ -66,8 +66,7 @@ public class VideoListActivity extends ListActivity {
         @Override
         protected List<Pair<String, String>> doInBackground(Void... params) {
             try {
-                //String url = "http://monterosa.d2.comp.nus.edu.sg:32768/dash-server/rest/video/list";
-                String url = "http://192.168.1.5:8080/dash-server/rest/video/list";
+                String url = "http://monterosa.d2.comp.nus.edu.sg:32768/dash-server/rest/video/list";
                 String response = StringDownloader.download(url);
                 Log.i("trace", "response received: " + response);
 
