@@ -353,6 +353,15 @@ public class Uploader implements View.OnClickListener {
                 httpConn.setRequestProperty("Content-type", "application/json");
                 httpConn.setChunkedStreamingMode(0);
 
+                try {
+                    DataOutputStream printout = new DataOutputStream(httpConn.getOutputStream ());
+                    printout.writeBytes(jsonParam.toString());
+                    printout.flush ();
+                    printout.close ();
+                } catch(Exception e) {
+                    //do nothing
+                }
+                
                 InputStream in = new BufferedInputStream(httpConn.getInputStream());
 
                 BufferedReader reader = new BufferedReader(new InputStreamReader(in));
