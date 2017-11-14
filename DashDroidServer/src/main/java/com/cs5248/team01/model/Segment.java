@@ -61,7 +61,6 @@ public class Segment {
 		
 		Segment result = new Segment(segmentId, v, sequenceNum, filePath);
 		ThreadExecutor.submitTask(new SegmentTask(result));
-		//result.submitTasks(new char[] {SEGMENT_TYPE_240, SEGMENT_TYPE_360, SEGMENT_TYPE_480});
 		
 		return segmentId;
 	}
@@ -94,6 +93,7 @@ public class Segment {
 	public Segment(int id, final Video video, int sequenceNum, String filePath) {
 		this.id = id;
 		this.video = video;
+		this.videoId = video.getId();
 		this.sequenceNum = sequenceNum;
 		this.filePath = filePath;
 		this.segmentType = SEGMENT_TYPE_ORIGINAL;
@@ -102,11 +102,11 @@ public class Segment {
 	public String getRepFilePath(char targetSegmentType) {
 		switch(targetSegmentType) {
 			case SEGMENT_TYPE_240:
-				return filePath + "_240.ts";
+				return filePath + "_240.mp4";
 			case SEGMENT_TYPE_360:
-				return filePath + "_360.ts";
+				return filePath + "_360.mp4";
 			case SEGMENT_TYPE_480:
-				return filePath + "_480.ts";
+				return filePath + "_480.mp4";
 			default:
 				return "";
 		}
@@ -136,6 +136,9 @@ public class Segment {
 	
 	public void setVideoId(int videoId) {
 		this.videoId = videoId;
+	}
+	public int getVideoId() {
+		return this.videoId;
 	}
 
 	public int getSequenceNum() {
@@ -186,25 +189,5 @@ public class Segment {
 					.executeQuery(oneResultMapper);
 		return result;
 	}
-//	public static File getFile(int videoId, String representation, String sequenceNo) throws NumberFormatException, ClassNotFoundException, SQLException {
-//		
-//		String filePath = new DBCall().createStatement("SELECT file_path from segment where video_id = ? and segment_type = ? and sequence_num = ?")
-//					.setInt(videoId)
-//					.setString(representation)
-//					.setInt(Integer.parseInt(sequenceNo))
-//					.executeQuery(new DBCall.ResultSetMapper<String>() {
-//
-//						@Override
-//						public String map(ResultSet rs) throws SQLException, RuntimeException {
-//							rs.next();
-//							String f = rs.getString("file_path");
-//							return f;
-//						}
-//						
-//					});
-//		
-//		logger.debug("video: " + videoId + " rep: " + representation + " sequenceNo: " + sequenceNo + " filePath: " + filePath);
-//		return new File(filePath);
-//	}
 		
 }

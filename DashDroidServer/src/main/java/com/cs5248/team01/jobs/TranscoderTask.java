@@ -48,15 +48,22 @@ public class TranscoderTask implements Runnable {
 			// "-b:v", "2M", "-b:a", "128k", "-vf", "scale=854:480", "-f",
 			// "mpegts",
 			// this.targetPath, "-loglevel", "quiet"};
+//			String[] c240 = { "ffmpeg", "-i", this.filePath, "-vcodec", "libx264", "-acodec", "aac", "-b:v", "700K",
+//					"-b:a", "64K", "-vf", "scale=426:240", "-f", "mpegts", "-strict", "-2",this.targetPath, "-loglevel", "quiet" };
+//
+//			String[] c360 = { "ffmpeg", "-i", this.filePath, "-vcodec", "libx264", "-acodec", "aac", "-b:v", "1M",
+//					"-b:a", "128k", "-vf", "scale=640:360", "-f", "mpegts", "-strict", "-2",this.targetPath, "-loglevel", "quiet" };
+//
+//			String[] c480 = { "ffmpeg", "-i", this.filePath, "-vcodec", "libx264", "-acodec", "aac", "-b:v", "2M",
+//					"-b:a", "128k", "-vf", "scale=854:480", "-f", "mpegts", "-strict", "-2", this.targetPath, "-loglevel", "quiet" };
 			String[] c240 = { "ffmpeg", "-i", this.filePath, "-vcodec", "libx264", "-acodec", "aac", "-b:v", "700K",
-					"-b:a", "64K", "-vf", "scale=426:240", "-f", "mpegts", "-strict", "-2",this.targetPath, "-loglevel", "quiet" };
+					"-b:a", "64K", "-vf", "scale=426:240", "-f", "mp4", "-strict", "-2",this.targetPath, "-loglevel", "quiet" };
 
 			String[] c360 = { "ffmpeg", "-i", this.filePath, "-vcodec", "libx264", "-acodec", "aac", "-b:v", "1M",
-					"-b:a", "128k", "-vf", "scale=640:360", "-f", "mpegts", "-strict", "-2",this.targetPath, "-loglevel", "quiet" };
+					"-b:a", "128k", "-vf", "scale=640:360", "-f", "mp4", "-strict", "-2",this.targetPath, "-loglevel", "quiet" };
 
 			String[] c480 = { "ffmpeg", "-i", this.filePath, "-vcodec", "libx264", "-acodec", "aac", "-b:v", "2M",
-					"-b:a", "128k", "-vf", "scale=854:480", "-f", "mpegts", "-strict", "-2", this.targetPath, "-loglevel", "quiet" };
-			
+					"-b:a", "128k", "-vf", "scale=854:480", "-f", "mp4", "-strict", "-2", this.targetPath, "-loglevel", "quiet" };			
 			switch (segmentType) {
 			case Segment.SEGMENT_TYPE_240:
 				transcodeProcess(c240);

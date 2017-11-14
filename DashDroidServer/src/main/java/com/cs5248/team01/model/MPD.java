@@ -20,6 +20,7 @@ public class MPD {
 	final static Logger logger = Logger.getLogger(MPD.class.getSimpleName());
 	public static final String MPD_TYPE_STATIC = "static";
 	public static final String MPD_TYPE_DYNAMIC = "dynamic";
+	private static int duration = 3;
 	//public static final String 
 	
 	private Video video;
@@ -28,10 +29,7 @@ public class MPD {
 		this.video = v;
 	}
 	
-	public String mpdType = "static";
-	
-	
-	public void writeXML(String filePath) {
+	public boolean writeXML(String filePath) {
 		try
 		{
 		  DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
@@ -42,7 +40,7 @@ public class MPD {
 		  //root elements
 		  Document doc = docBuilder.newDocument();
 		  
-		  Element rootMPD = this.createMPDElement(doc, numberOfSegments * 2, "static");
+		  Element rootMPD = this.createMPDElement(doc, numberOfSegments * duration, video.isFullVideo() ? MPD_TYPE_STATIC : MPD_TYPE_DYNAMIC);
 		  
 		  Element period = this.createPeriodElement(doc, this.video.getId());
 		  
@@ -50,9 +48,9 @@ public class MPD {
 		  
 		  
 		  
-		  Element representation240 = this.createRepresentation(doc, String.valueOf(Segment.SEGMENT_TYPE_240), 128000, 60, numberOfSegments, 3);
-		  Element representation360 = this.createRepresentation(doc, String.valueOf(Segment.SEGMENT_TYPE_360), 256000, 60, numberOfSegments, 3);
-		  Element representation480 = this.createRepresentation(doc, String.valueOf(Segment.SEGMENT_TYPE_480), 512000, 60, numberOfSegments, 3);
+		  Element representation240 = this.createRepresentation(doc, String.valueOf(Segment.SEGMENT_TYPE_240), 764000, 60, numberOfSegments, duration);
+		  Element representation360 = this.createRepresentation(doc, String.valueOf(Segment.SEGMENT_TYPE_360), 1128000, 60, numberOfSegments, duration);
+		  Element representation480 = this.createRepresentation(doc, String.valueOf(Segment.SEGMENT_TYPE_480), 2128000, 60, numberOfSegments, duration);
 		  
 		  adaptationSet.appendChild(representation240);
 		  adaptationSet.appendChild(representation360);
@@ -68,14 +66,18 @@ public class MPD {
 
 		  StreamResult result =  new StreamResult(new File(filePath));
 		  transformer.transform(source, result);
+		  return true;
 
 		}catch(ParserConfigurationException e){
 			logger.error(org.apache.commons.lang.exception.ExceptionUtils.getStackTrace(e));
+			return false;
 		}catch(TransformerException e){
 			logger.error(org.apache.commons.lang.exception.ExceptionUtils.getStackTrace(e));
+			return false;
 		}
 		catch(Exception e) {
 			logger.error(org.apache.commons.lang.exception.ExceptionUtils.getStackTrace(e));
+			return false;
 		}
 	}
 	
@@ -106,7 +108,7 @@ public class MPD {
 	
 	private Element createAdaptationSet(Document doc) {
 		Element adaptationSet = doc.createElement("AdaptationSet");
-		adaptationSet.setAttribute("mimeType", "video/mp2t");
+		adaptationSet.setAttribute("mimeType", "video/mp4");
 		return adaptationSet;
 	}
 	
