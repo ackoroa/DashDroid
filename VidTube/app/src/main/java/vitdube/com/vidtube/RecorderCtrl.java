@@ -2,6 +2,8 @@ package vitdube.com.vidtube;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.hardware.Camera;
@@ -116,8 +118,18 @@ public class RecorderCtrl
         String now = format.format(new Date());
         this.title = "Vid_" + now;
 
-        this.filePathPrefix = "/sdcard/vidTube_file_" + now + "_";
-        this.outputFilePath = "/sdcard/vidTube_file_" + now + ".mp4";
+        PackageManager m = context.getPackageManager();
+        String s = context.getPackageName();
+        try {
+            PackageInfo p = m.getPackageInfo(s, 0);
+            s = p.applicationInfo.dataDir;
+        }
+        catch(Exception e) {
+            s = s + "data";
+        }
+
+        this.filePathPrefix = s+ "/vidTube_file_" + now + "_";
+        this.outputFilePath = s + "/vidTube_file_" + now + ".mp4";
     }
 
     @Override

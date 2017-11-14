@@ -36,7 +36,8 @@ public class ViewUploadedActivity extends ActionBarActivity {
     private static String TAG = "ServerView";
     ArrayAdapter<String> adapter;
 
-    public static final String ENDPOINT = "http://monterosa.d2.comp.nus.edu.sg:32768/dash-server/rest";
+    //public static final String ENDPOINT = "http://monterosa.d2.comp.nus.edu.sg:32768/dash-server/rest";
+    public static final String ENDPOINT = "http://192.168.1.5:8080/dash-server/rest";
 
     public class GetVideoListTask extends AsyncTask<String, Object, List<VideoInfo>> {
 
