@@ -203,7 +203,7 @@ public class VideoResource {
 			response = Response.status(500, e.getMessage());
 		}
 		
-		return getHLSHelper(videoId, "");
+		return response.build();
 	}
 	
 	@GET
