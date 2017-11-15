@@ -43,6 +43,7 @@ public final class Video {
 	private static final String COLUMN_IS_FULL_VIDEO = "is_full_video";
 	private static final String COLUMN_DESCRIPTION = "description";
 	private static final String COLUMN_MPD_PATH = "mpd_path";
+	private static final String COLUMN_HLS_PATH = "hls_path";
 	private static final String COLUMN_CREATION_DATETIME = "creation_datetime";
 	private static final String COLUMN_LAST_MODIFIED_DATETIME = "last_modified_datetime";
 	
@@ -58,6 +59,8 @@ public final class Video {
 				v.setFullVideo(rs.getString(COLUMN_IS_FULL_VIDEO) == FULL_VIDEO_TRUE);
 				v.setDescription(rs.getString(COLUMN_DESCRIPTION));
 				v.setMPDPath(rs.getString(COLUMN_MPD_PATH));
+				v.setHLSPath(rs.getString(COLUMN_HLS_PATH));
+				
 				v.setCreationDateTime(rs.getDate(COLUMN_CREATION_DATETIME));
 				v.setLastModifiedDateTime(rs.getDate(COLUMN_LAST_MODIFIED_DATETIME));
 				result.add(v);
@@ -80,6 +83,7 @@ public final class Video {
 			v.setFullVideo(rs.getString(COLUMN_IS_FULL_VIDEO) == FULL_VIDEO_TRUE);
 			v.setDescription(rs.getString(COLUMN_DESCRIPTION));
 			v.setMPDPath(rs.getString(COLUMN_MPD_PATH));
+			v.setHLSPath(rs.getString(COLUMN_HLS_PATH));
 			v.setCreationDateTime(rs.getDate(COLUMN_CREATION_DATETIME));
 			v.setLastModifiedDateTime(rs.getDate(COLUMN_LAST_MODIFIED_DATETIME));
 			return v;
@@ -149,7 +153,28 @@ public final class Video {
 			return "";
 		}
 	}
-	
+	@JsonIgnore
+	public String getHLSPathDB() {
+		try {
+			return new DBCall().createStatement("select hlsPath from video where id = ?")
+					.setInt(this.id)
+					.executeQuery(new DBCall.ResultSetMapper<String>() {
+
+						@Override
+						public String map(ResultSet rs) throws SQLException, RuntimeException {
+							if(rs.next()) {
+								return rs.getString(COLUMN_HLS_PATH);
+							}
+							return "";
+						}
+						
+					});
+			
+		}
+		catch(Exception e) {
+			return "";
+		}
+	}
 	private static final String FULL_VIDEO_TRUE = "T";
 	private static final String FULL_VIDEO_FALSE = "F";
 	
@@ -161,6 +186,7 @@ public final class Video {
 	private boolean isFullVideo;
 	private String description;
 	private String mpdPath;
+	private String hlsPath;
 	private Date creationDateTime;
 	private Date lastModifiedDateTime;
 	
@@ -191,6 +217,12 @@ public final class Video {
 	}
 	public void setMPDPath(String mpdPath) {
 		this.mpdPath = mpdPath;
+	}
+	public String getHLSPath() {
+		return this.hlsPath;
+	}
+	public void setHLSPath(String hlsPath) {
+		this.hlsPath = hlsPath;
 	}
 	public Date getCreationDateTime() {
 		return creationDateTime;
@@ -228,6 +260,13 @@ public final class Video {
 		logger.info("updating MPD for video: " + this.id + " path: " + this.mpdPath);
 		new DBCall().createStatement("update video set mpd_path = ? where id = ?")
 			.setString(this.mpdPath)
+			.setInt(this.id)
+			.executeUpdate();
+	}
+	public void updateHLSPath() throws ClassNotFoundException, SQLException {
+		logger.info("updating HLS for video: " + this.id + " path: " + this.hlsPath);
+		new DBCall().createStatement("update video set hls_path = ? where id = ?")
+			.setString(this.hlsPath)
 			.setInt(this.id)
 			.executeUpdate();
 	}

@@ -43,6 +43,7 @@ public class SegmentTask implements Runnable {
 				transcodes.add(Executors.callable(task));
 			}
 			
+			//this line will execute all the task and wait for them to return
 			List<Future<Object>> result = es.invokeAll(transcodes);
 			
 			es.submit(new MPDTask(segment.getVideo()));

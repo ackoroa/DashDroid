@@ -129,7 +129,7 @@ public class RepresentationPicker {
         if (lastRep == RepLevel.HIGH || !allowUpgrade ||
                 repBandwidth(lastRep.higher()) >= SWITCH_PCT_BUFFER * pastAverage(pastThroughputs)) {
             try {
-                double delayDuration = Math.min(SEGMENT_DURATION, Math.max(bufferLevel - B_OPT, 0));
+                double delayDuration = Math.max(SEGMENT_DURATION, Math.max(bufferLevel - B_OPT, 0));
                 Log.i("trace", "Delay download: " + delayDuration);
                 Thread.sleep((long) (1000 * delayDuration));
             } catch (Exception e) {

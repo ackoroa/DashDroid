@@ -26,6 +26,10 @@ public class VideoBuffer {
         return bufferContentDuration;
     }
 
+    public double getFillRatio() {
+        return (double) bufferContentDuration / BUFFER_TOTAL_DURATION;
+    }
+
     public int getBufferContentDuration() {
         return bufferContentDuration;
     }
@@ -68,7 +72,7 @@ public class VideoBuffer {
 
     private synchronized void updateBufferSize(long delta) {
         bufferContentDuration += delta;
-        Log.i("trace", "Buffer Level: " + bufferContentDuration);
+        Log.i("trace", "Buffer Level: " + String.format("%.2f", (double) bufferContentDuration / BUFFER_TOTAL_DURATION));
         Log.i("perfTest", System.currentTimeMillis() + ",bufferLevel,"
                 + String.format("%.2f", (double) bufferContentDuration / BUFFER_TOTAL_DURATION));
     }
