@@ -8,9 +8,9 @@ public class Properties {
     public static String VIDEO_FILE_EXTENSION = ".mp4";
 
     // adaptation algo and buffer parameters
-    public final static int BUFFER_TOTAL_DURATION = 50;
+    public final static int BUFFER_TOTAL_DURATION = 45;
     public final static int B_MIN = 6;
-    public final static double SWITCH_PCT_BUFFER = 0.90;
+    public final static double SWITCH_PCT_BUFFER = 0.975;
     public final static int PAST_WINDOW_SIZE = 5;
     public static final double PLAYER_BUFFERING_DELAY = 0.2;
 

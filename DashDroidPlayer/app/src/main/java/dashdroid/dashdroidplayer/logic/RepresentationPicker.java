@@ -21,8 +21,8 @@ public class RepresentationPicker {
     private int SEGMENT_DURATION;
 
     private final static int PAST_WINDOW_SIZE = Properties.PAST_WINDOW_SIZE;
-    private List<Double> pastThroughputs;
-    private List<Integer> pastBufferLevels;
+    private volatile List<Double> pastThroughputs;
+    private volatile List<Integer> pastBufferLevels;
 
     private volatile RepLevel lastRep = RepLevel.LOW;
     private volatile boolean runningFastStart = true;
@@ -37,6 +37,14 @@ public class RepresentationPicker {
 
         pastThroughputs = new LinkedList<>();
         pastBufferLevels = new LinkedList<>();
+    }
+
+    public double getBandwidthEstimate() {
+        return pastAverage(pastThroughputs);
+    }
+
+    public String getLastRepString() {
+        return lastRep.toString();
     }
 
     public RepLevel chooseRepresentation(int bufferLevel, double bandwidth) {
@@ -126,19 +134,22 @@ public class RepresentationPicker {
     }
 
     private RepLevel delayOrUpgrade(int bufferLevel, double availBandwidth, boolean allowUpgrade) {
-        if (lastRep == RepLevel.HIGH || !allowUpgrade ||
+        if (lastRep == RepLevel.HIGH ||
                 repBandwidth(lastRep.higher()) >= SWITCH_PCT_BUFFER * pastAverage(pastThroughputs)) {
             try {
-                double delayDuration = Math.max(SEGMENT_DURATION, Math.max(bufferLevel - B_OPT, 0));
+                double delayDuration = Math.max(SEGMENT_DURATION, bufferLevel - B_OPT);
                 Log.i("trace", "Delay download: " + delayDuration);
                 Thread.sleep((long) (1000 * delayDuration));
             } catch (Exception e) {
                 Log.e("trace", e.getMessage(), e);
             }
+        }
 
+        if (allowUpgrade) {
+            return lastRep.higher();
+        } else {
             return lastRep;
         }
-        return lastRep.higher();
     }
 
     private double pastAverage(List<Double> pastHistory) {
