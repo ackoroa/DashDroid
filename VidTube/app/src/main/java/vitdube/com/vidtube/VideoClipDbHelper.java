@@ -80,6 +80,15 @@ public class VideoClipDbHelper extends SQLiteOpenHelper {
         return getVideoClipsFromCursor(cursor);
     }
 
+    public List<VideoClip> getAllVideoClipsByName(SQLiteDatabase db, String videoName) {
+        Cursor cursor = db.rawQuery("SELECT * FROM " + VideoClipContract.VideoClip.TABLE_NAME
+                + " WHERE " + VideoClipContract.VideoClip.COLUMN_NAME_TITLE
+                + " = '" + videoName
+                + "'", null);
+
+        return getVideoClipsFromCursor(cursor);
+    }
+
     @NonNull
     private List<VideoClip> getVideoClipsFromCursor(Cursor cursor) {
         List<VideoClip> clips = new ArrayList<>();
@@ -89,6 +98,7 @@ public class VideoClipDbHelper extends SQLiteOpenHelper {
             clip.setChunkId(cursor.getInt(cursor.getColumnIndexOrThrow(VideoClipContract.VideoClip.COLUMN_NAME_CHUNK_ID)));
             clip.setFilePath(cursor.getString(cursor.getColumnIndexOrThrow(VideoClipContract.VideoClip.COLUMN_NAME_FILEPATH)));
             clip.setVideoId(cursor.getInt(cursor.getColumnIndexOrThrow((VideoClipContract.VideoClip.COLUMN_NAME_VIDEO_ID))));
+            clip.setTitle(cursor.getString(cursor.getColumnIndexOrThrow((VideoClipContract.VideoClip.COLUMN_NAME_TITLE))));
             clips.add(clip);
         }
         return clips;
@@ -111,7 +121,7 @@ public class VideoClipDbHelper extends SQLiteOpenHelper {
                 + " AND " + VideoClipContract.VideoClip.COLUMN_NAME_UPLOADED
                 + " = 0"
                 + " AND " + VideoClipContract.VideoClip.COLUMN_NAME_TITLE
-                + " = " + videoName, null);
+                + " = '" + videoName + "'", null);
 
         return getVideoClipsFromCursor(cursor);
     }

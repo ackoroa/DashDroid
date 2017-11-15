@@ -319,7 +319,8 @@ public class Uploader implements View.OnClickListener {
                             dbHelper.getVideoClipsByIncompleteUploadAndVideoName(readableDb, clip.getTitle());
                             Toast.makeText(context, "Uploaded " + clip.getChunkId(), Toast.LENGTH_SHORT).show();
                             if (remainingClips.size() < 1) {
-                                Integer total = dbHelper.getVideoClipsByName(readableDb, clip.getTitle()).size();
+                                Integer total = dbHelper.getAllVideoClipsByName(readableDb, clip.getTitle()).size();
+                                Log.i("Uploader", "Name: " + clip.getTitle() + " Total is:" + total);
                                 endVideo(String.valueOf(clip.getVideoId()), clip.getTitle(), total, new PostTaskListener<Boolean>() {
                                     @Override
                                     void onPostTask(Boolean result) {
