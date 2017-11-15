@@ -63,7 +63,7 @@ public class MainActivity extends AppCompatActivity implements MediaRecorder.OnI
 
         videoClipDbHelper = new VideoClipDbHelper(this);
         db = videoClipDbHelper.getWritableDatabase();
-
+//
 //        db.execSQL(videoClipDbHelper.SQL_DELETE_ENTRIES);
 //        db.execSQL(videoClipDbHelper.SQL_CREATE_ENTRIES);
         setContentView(R.layout.activity_main);
@@ -87,9 +87,16 @@ public class MainActivity extends AppCompatActivity implements MediaRecorder.OnI
             Toast.makeText(this.getApplicationContext(),
                     "Need audio permission",
                     Toast.LENGTH_LONG).show();
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO},
+            ActivityCompat.requestPermissions(this, new String[]{
+                            Manifest.permission.RECORD_AUDIO,
+                            Manifest.permission.CAMERA,
+                            Manifest.permission.INTERNET,
+                            Manifest.permission.ACCESS_NETWORK_STATE,
+                            Manifest.permission.READ_EXTERNAL_STORAGE,
+                            Manifest.permission.WRITE_EXTERNAL_STORAGE},
                     200);
         }
+
     }
 
     @Override
