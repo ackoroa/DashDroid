@@ -1,13 +1,14 @@
 package vitdube.com.vidtube;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 /**
  * Created by xingjia.zhang on 29/10/17.
  */
 
-public class Video {
+public class Video implements Comparable<Video> {
 
     private String name;
     private List<VideoClip> clips;
@@ -51,6 +52,11 @@ public class Video {
             }
         }
         return null;
+    }
+
+    public int compareTo(Video o)
+    {
+        return(name.compareTo(o.name));
     }
 
 }

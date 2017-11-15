@@ -67,6 +67,14 @@
             android:layout_toEndOf="@+id/button"
             android:text="View Server Clips"/>
 
+        <Button
+            android:id="@+id/local_list_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/inner_frame_layout"
+            android:layout_toEndOf="@+id/server_list_button"
+            android:text="View Local Files"/>
+
     </RelativeLayout>
 
 </FrameLayout>

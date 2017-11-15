@@ -6,6 +6,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
 import android.os.AsyncTask;
+import android.os.Looper;
 import android.support.annotation.BoolRes;
 import android.support.annotation.NonNull;
 import android.util.Log;
@@ -35,6 +36,7 @@ import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.logging.Handler;
 
 /**
  * Created by xingjia.zhang on 28/10/17.
@@ -301,7 +303,9 @@ public class Uploader implements View.OnClickListener {
 
     public void uploadFailedClips() {
         List<VideoClip> clips = dbHelper.getVideoClipsByIncompleteUpload(writableDb);
+
         for (final VideoClip clip : clips) {
+            Log.i("Uploader", "Clip is:" + clip.getVideoId());
             uploadSingleClip(String.valueOf(clip.getVideoId()),
                     clip.getChunkId(),
                     clip.getFilePath(),
@@ -355,7 +359,7 @@ public class Uploader implements View.OnClickListener {
 
                 try {
                     DataOutputStream printout = new DataOutputStream(httpConn.getOutputStream ());
-                    printout.writeBytes(jsonParam.toString());
+                    printout.writeBytes(json.toString());
                     printout.flush ();
                     printout.close ();
                 } catch(Exception e) {

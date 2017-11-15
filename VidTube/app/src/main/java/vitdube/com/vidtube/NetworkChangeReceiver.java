@@ -5,6 +5,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.wifi.WifiManager;
+import android.util.Log;
 import android.widget.Toast;
 
 /**
@@ -14,6 +16,7 @@ import android.widget.Toast;
 public class NetworkChangeReceiver extends BroadcastReceiver {
 
     Uploader uploader;
+    private static String TAG = "Network Receiver";
 
     @Override
     public void onReceive(final Context context, final Intent intent) {
@@ -23,12 +26,30 @@ public class NetworkChangeReceiver extends BroadcastReceiver {
         ConnectivityManager cm = (ConnectivityManager) context
                 .getSystemService(Context.CONNECTIVITY_SERVICE);
 
-        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
-        int status = activeNetwork.getType();
-        // Note: 1 means WIFI Connection
-        if ( status == 1) {
-            uploader.uploadFailedClips();
+        WifiManager wifi = (WifiManager)context.getSystemService(Context.WIFI_SERVICE);
+        boolean wifiEnabled = wifi.isWifiEnabled();
+        if (!wifiEnabled) {
+            return;
         }
+        Log.i(TAG, "Trying to get wifi...");
+        int status = 0;
+
+        do {
+
+            NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+            Log.i(TAG, "Trying to get wifi status");
+            try {
+                Thread.sleep(1000);
+            } catch (Exception e) {
+
+            }
+            // Note: 1 means WIFI Connection
+            if (activeNetwork != null && activeNetwork.getType() == 1) {
+
+                status = 1;
+                uploader.uploadFailedClips();
+            }
+        } while (status == 0);
 
         Toast.makeText(context, "Network status change: " +
                 (status == 1 ? "WIFI connected" : "No connection"), Toast.LENGTH_SHORT).show();
