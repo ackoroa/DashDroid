@@ -43,6 +43,10 @@ public class RepresentationPicker {
         return pastAverage(pastThroughputs);
     }
 
+    public String getLastRepString() {
+        return lastRep.toString();
+    }
+
     public RepLevel chooseRepresentation(int bufferLevel, double bandwidth) {
         Log.i("trace", "Buffer Level: " + bufferLevel);
         Log.i("trace", "Latest Bandwith: " + String.format("%.2f", bandwidth / 1000) + " kb/s");
@@ -130,19 +134,22 @@ public class RepresentationPicker {
     }
 
     private RepLevel delayOrUpgrade(int bufferLevel, double availBandwidth, boolean allowUpgrade) {
-        if (lastRep == RepLevel.HIGH || !allowUpgrade ||
+        if (lastRep == RepLevel.HIGH ||
                 repBandwidth(lastRep.higher()) >= SWITCH_PCT_BUFFER * pastAverage(pastThroughputs)) {
             try {
-                double delayDuration = Math.max(SEGMENT_DURATION, Math.max(bufferLevel - B_OPT, 0));
+                double delayDuration = Math.max(SEGMENT_DURATION, bufferLevel - B_OPT);
                 Log.i("trace", "Delay download: " + delayDuration);
                 Thread.sleep((long) (1000 * delayDuration));
             } catch (Exception e) {
                 Log.e("trace", e.getMessage(), e);
             }
+        }
 
+        if (allowUpgrade) {
+            return lastRep.higher();
+        } else {
             return lastRep;
         }
-        return lastRep.higher();
     }
 
     private double pastAverage(List<Double> pastHistory) {
