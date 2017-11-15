@@ -128,7 +128,7 @@ public class VideoPlayerActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(String videoToDownload) {
-            String bandwidthText = String.format("%.2f", latestBandwidth/1000)  + " kb/s ("
+            String bandwidthText = String.format("%.2f", repPicker.getBandwidthEstimate()/1000)  + " kb/s ("
                     + String.format("%.2f", buffer.getFillRatio()) + " buffer)";
             bandwidthMeter.setText(bandwidthText);
 

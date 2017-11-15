@@ -21,8 +21,8 @@ public class RepresentationPicker {
     private int SEGMENT_DURATION;
 
     private final static int PAST_WINDOW_SIZE = Properties.PAST_WINDOW_SIZE;
-    private List<Double> pastThroughputs;
-    private List<Integer> pastBufferLevels;
+    private volatile List<Double> pastThroughputs;
+    private volatile List<Integer> pastBufferLevels;
 
     private volatile RepLevel lastRep = RepLevel.LOW;
     private volatile boolean runningFastStart = true;
@@ -37,6 +37,10 @@ public class RepresentationPicker {
 
         pastThroughputs = new LinkedList<>();
         pastBufferLevels = new LinkedList<>();
+    }
+
+    public double getBandwidthEstimate() {
+        return pastAverage(pastThroughputs);
     }
 
     public RepLevel chooseRepresentation(int bufferLevel, double bandwidth) {
