@@ -4,10 +4,12 @@ import android.Manifest;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.database.sqlite.SQLiteDatabase;
 import android.hardware.Camera;
 import android.media.MediaRecorder;
+import android.net.wifi.WifiManager;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -36,6 +38,7 @@ public class MainActivity extends AppCompatActivity implements MediaRecorder.OnI
     private Button recordingButton;
     private Button viewDBButton;
     private Button viewServerButton;
+    private Button viewLocalButton;
     private Switch liveSwitch;
     private Boolean isLive = false;
 
@@ -53,6 +56,7 @@ public class MainActivity extends AppCompatActivity implements MediaRecorder.OnI
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
         requestForPermissions();
         appContext = this;
@@ -74,6 +78,7 @@ public class MainActivity extends AppCompatActivity implements MediaRecorder.OnI
         prepareRecordingButton();
         prepareViewDBButton();
         prepareServerButton();
+        prepareViewLocalButton();
         prepareSwitch();
     }
 
@@ -119,6 +124,19 @@ public class MainActivity extends AppCompatActivity implements MediaRecorder.OnI
             public void onClick(View view) {
                 Intent mainToServerViewIntent = new Intent();
                 mainToServerViewIntent.setClass(appContext, ViewUploadedActivity.class);
+                startActivity(mainToServerViewIntent);
+            }
+        });
+    }
+
+    private void prepareViewLocalButton() {
+        viewLocalButton = (Button) findViewById(R.id.local_list_button);
+        viewLocalButton.setClickable(true);
+        viewLocalButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent mainToServerViewIntent = new Intent();
+                mainToServerViewIntent.setClass(appContext, ViewLocalActivity.class);
                 startActivity(mainToServerViewIntent);
             }
         });

@@ -101,7 +101,10 @@ public class CustomArrayAdapter extends BaseExpandableListAdapter {
         }
         TextView chunkNameView = v.findViewById(R.id.chunk_info);
         String uploaded = chunk.getUploaded() == 0 ? "Not uploaded." : "Uploaded";
-        chunkNameView.setText(chunk.getChunkId() + ": " + chunk.getFilePath() + " - " + uploaded);
+        chunkNameView.setText(chunk.getVideoId() + "-"
+                + chunk.getChunkId() + ": "
+                + chunk.getFilePath() + " - "
+                + uploaded);
 
         return v;
     }

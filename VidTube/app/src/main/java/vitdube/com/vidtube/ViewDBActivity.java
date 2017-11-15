@@ -19,6 +19,7 @@ import android.widget.ListView;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,7 +34,8 @@ public class ViewDBActivity extends ActionBarActivity {
             VideoClipContract.VideoClip.COLUMN_NAME_TITLE,
             VideoClipContract.VideoClip.COLUMN_NAME_CHUNK_ID,
             VideoClipContract.VideoClip.COLUMN_NAME_FILEPATH,
-            VideoClipContract.VideoClip.COLUMN_NAME_UPLOADED
+            VideoClipContract.VideoClip.COLUMN_NAME_UPLOADED,
+            VideoClipContract.VideoClip.COLUMN_NAME_VIDEO_ID
     };
 
     @Override
@@ -50,12 +52,11 @@ public class ViewDBActivity extends ActionBarActivity {
 
         Log.i("VideoClipDB", "Total videos:" + String.valueOf(videos.size()));
 
-        for (Video video : videos.values()) {
-            Log.i("VideoClipDB", "Clips:" + String.valueOf(video.getClips().size()));
-        }
+        List<Video> videoList = new ArrayList<>(videos.values());
+        Collections.sort(videoList);
 
         CustomArrayAdapter adapter = new CustomArrayAdapter(this, R.layout.video_list_item ,
-                new ArrayList<>(videos.values()));
+                videoList);
 
         ExpandableListView listView = (ExpandableListView) findViewById(R.id.video_list);
 
@@ -69,6 +70,7 @@ public class ViewDBActivity extends ActionBarActivity {
                 + ", " + projection[1]
                 + ", " + projection[2]
                 + ", " + projection[3]
+                + ", " + projection[4]
                 + " FROM "
                 + VideoClipContract.VideoClip.TABLE_NAME, null);
 
@@ -81,6 +83,7 @@ public class ViewDBActivity extends ActionBarActivity {
             clip.setChunkId(cursor.getInt(cursor.getColumnIndexOrThrow(VideoClipContract.VideoClip.COLUMN_NAME_CHUNK_ID)));
             clip.setFilePath(cursor.getString(cursor.getColumnIndexOrThrow(VideoClipContract.VideoClip.COLUMN_NAME_FILEPATH)));
             clip.setUploaded(cursor.getInt(cursor.getColumnIndexOrThrow(VideoClipContract.VideoClip.COLUMN_NAME_UPLOADED)));
+            clip.setVideoId(cursor.getInt(cursor.getColumnIndexOrThrow(VideoClipContract.VideoClip.COLUMN_NAME_VIDEO_ID)));
             clips.add(clip);
         }
         return clips;

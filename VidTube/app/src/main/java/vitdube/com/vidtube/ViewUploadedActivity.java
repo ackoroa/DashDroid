@@ -46,7 +46,6 @@ public class ViewUploadedActivity extends ActionBarActivity {
             videoInfos = videos;
             for (VideoInfo vid : videoInfos) {
                 Log.i("adapter count", adapter.getCount() + "");
-                adapter.insert("Heh", adapter.getCount());
                 adapter.insert(String.valueOf(vid.getId()) + " - " + String.valueOf(vid.getSegments()), adapter.getCount());
             }
         }
@@ -123,15 +122,6 @@ public class ViewUploadedActivity extends ActionBarActivity {
 
         GetVideoListTask getVideoListTask = new GetVideoListTask();
         getVideoListTask.execute(new String[]{});
-
-        try {
-            Thread.sleep(2000);
-        } catch (Exception e) {
-
-        }
-
-
-
 
     }
 }

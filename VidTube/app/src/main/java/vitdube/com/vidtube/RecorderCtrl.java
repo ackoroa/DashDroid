@@ -8,6 +8,7 @@ import android.hardware.Camera;
 import android.media.CamcorderProfile;
 import android.media.MediaRecorder;
 import android.os.AsyncTask;
+import android.os.Environment;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -116,8 +117,8 @@ public class RecorderCtrl
         String now = format.format(new Date());
         this.title = "Vid_" + now;
 
-        this.filePathPrefix = "/sdcard/vidTube_file_" + now + "_";
-        this.outputFilePath = "/sdcard/vidTube_file_" + now + ".mp4";
+        this.filePathPrefix = context.getExternalFilesDir(null).getAbsolutePath() + "vidTube_file_" + now + "_";
+        this.outputFilePath = context.getExternalFilesDir(null).getAbsolutePath() + "vidTube_file_" + now + ".mp4";
     }
 
     @Override
@@ -155,7 +156,7 @@ public class RecorderCtrl
         Log.e(TAG, "is live:" + isLive);
         if (isLive) {
             Log.e(TAG, "set max duration!");
-            recorder.setMaxDuration(6000);
+            recorder.setMaxDuration(5000);
         }
 
         try {
@@ -202,7 +203,7 @@ public class RecorderCtrl
                 }, new PostTaskListener<Map<String, Object>>() {
                     @Override
                     void onPostTask(Map<String, Object> result) {
-                        insertClipInfoIntoDB((int) result.get("segmentIdx"),
+                        videoClipDbHelper.insertClipInfoIntoDB(db, title, (int) result.get("segmentIdx"),
                                 (String) result.get("segmentFilePath"));
 
                     }
@@ -231,7 +232,7 @@ public class RecorderCtrl
                                     int segmentIdx = (int) result.get("segmentIdx");
                                     final String path = (String) result.get("segmentFilePath");
 
-                                    insertClipInfoIntoDB(segmentIdx, path);
+                                    videoClipDbHelper.insertClipInfoIntoDB(db, title, segmentIdx, path);
                                     videoClipDbHelper.updateDBClipToUploadStatus(db, title, true);
 
                                     Uploader.uploadSingleClip(liveVideoId.toString(), segmentIdx, path,
@@ -261,7 +262,7 @@ public class RecorderCtrl
                             int segmentIdx = (int) result.get("segmentIdx");
                             final String path = (String) result.get("segmentFilePath");
 
-                            insertClipInfoIntoDB(segmentIdx, path);
+                            videoClipDbHelper.insertClipInfoIntoDB(db, title, segmentIdx, path);
                             videoClipDbHelper.updateDBClipToUploadStatus(db, title, true);
 
                             Uploader.uploadSingleClip(liveVideoId.toString(), segmentIdx + liveVideoSeqNumber * 2, path,
@@ -283,16 +284,6 @@ public class RecorderCtrl
 
         recorder.reset();
         recording = false;
-    }
-
-    private void insertClipInfoIntoDB(int chunk, String filePath) {
-        ContentValues clipContent = new ContentValues();
-        clipContent.put(VideoClipContract.VideoClip.COLUMN_NAME_TITLE, getTitle());
-        clipContent.put(VideoClipContract.VideoClip.COLUMN_NAME_FILEPATH, filePath);
-        clipContent.put(VideoClipContract.VideoClip.COLUMN_NAME_CHUNK_ID, chunk);
-        clipContent.put(VideoClipContract.VideoClip.COLUMN_NAME_UPLOADED, 0);
-        db.insert(VideoClipContract.VideoClip.TABLE_NAME, null, clipContent);
-        Log.i("VideoClipDB", "Saved " + clipContent.toString());
     }
 
     private List<VideoClip> getVideoClips() {

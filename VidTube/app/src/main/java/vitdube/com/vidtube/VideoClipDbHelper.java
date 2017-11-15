@@ -1,5 +1,6 @@
 package vitdube.com.vidtube;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -33,6 +34,16 @@ public class VideoClipDbHelper extends SQLiteOpenHelper {
 
     public VideoClipDbHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
+    }
+
+    public void insertClipInfoIntoDB(SQLiteDatabase db, String videoName, int chunk, String filePath) {
+        ContentValues clipContent = new ContentValues();
+        clipContent.put(VideoClipContract.VideoClip.COLUMN_NAME_TITLE, videoName);
+        clipContent.put(VideoClipContract.VideoClip.COLUMN_NAME_FILEPATH, filePath);
+        clipContent.put(VideoClipContract.VideoClip.COLUMN_NAME_CHUNK_ID, chunk);
+        clipContent.put(VideoClipContract.VideoClip.COLUMN_NAME_UPLOADED, 0);
+        db.insert(VideoClipContract.VideoClip.TABLE_NAME, null, clipContent);
+        Log.i("VideoClipDB", "Saved " + clipContent.toString());
     }
 
     public void updateDBClipUploadStatus(SQLiteDatabase db, String filePath, boolean uploaded) {
@@ -77,6 +88,7 @@ public class VideoClipDbHelper extends SQLiteOpenHelper {
             VideoClip clip = new VideoClip();
             clip.setChunkId(cursor.getInt(cursor.getColumnIndexOrThrow(VideoClipContract.VideoClip.COLUMN_NAME_CHUNK_ID)));
             clip.setFilePath(cursor.getString(cursor.getColumnIndexOrThrow(VideoClipContract.VideoClip.COLUMN_NAME_FILEPATH)));
+            clip.setVideoId(cursor.getInt(cursor.getColumnIndexOrThrow((VideoClipContract.VideoClip.COLUMN_NAME_VIDEO_ID))));
             clips.add(clip);
         }
         return clips;
@@ -85,8 +97,8 @@ public class VideoClipDbHelper extends SQLiteOpenHelper {
     public List<VideoClip> getVideoClipsByIncompleteUpload(SQLiteDatabase db) {
         Cursor cursor = db.rawQuery("SELECT * FROM " + VideoClipContract.VideoClip.TABLE_NAME
                 + " WHERE " + VideoClipContract.VideoClip.COLUMN_NAME_TOUPLOAD
-                + " = 1 '"
-                + "' AND " + VideoClipContract.VideoClip.COLUMN_NAME_UPLOADED
+                + " = 1 "
+                + " AND " + VideoClipContract.VideoClip.COLUMN_NAME_UPLOADED
                 + " = 0", null);
 
         return getVideoClipsFromCursor(cursor);
