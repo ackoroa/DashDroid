@@ -89,6 +89,14 @@ public class VideoClipDbHelper extends SQLiteOpenHelper {
         return getVideoClipsFromCursor(cursor);
     }
 
+    public List<VideoClip> getAllVideoClipsVideoId(SQLiteDatabase db, int videoId) {
+        Cursor cursor = db.rawQuery("SELECT * FROM " + VideoClipContract.VideoClip.TABLE_NAME
+                + " WHERE " + VideoClipContract.VideoClip.COLUMN_NAME_VIDEO_ID
+                + " = '" + String.valueOf(videoId)
+                + "'", null);
+        return getVideoClipsFromCursor(cursor);
+    }
+
     @NonNull
     private List<VideoClip> getVideoClipsFromCursor(Cursor cursor) {
         List<VideoClip> clips = new ArrayList<>();

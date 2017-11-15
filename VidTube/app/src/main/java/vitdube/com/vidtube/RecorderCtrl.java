@@ -234,6 +234,7 @@ public class RecorderCtrl
 
                                     videoClipDbHelper.insertClipInfoIntoDB(db, title, segmentIdx, path);
                                     videoClipDbHelper.updateDBClipToUploadStatus(db, title, true);
+                                    videoClipDbHelper.updateDBClipVideoId(db, title, liveVideoId);
 
                                     Uploader.uploadSingleClip(liveVideoId.toString(), segmentIdx, path,
                                             new PostTaskListener<Boolean>() {
@@ -264,6 +265,7 @@ public class RecorderCtrl
 
                             videoClipDbHelper.insertClipInfoIntoDB(db, title, segmentIdx, path);
                             videoClipDbHelper.updateDBClipToUploadStatus(db, title, true);
+                            videoClipDbHelper.updateDBClipVideoId(db, title, liveVideoId);
 
                             Uploader.uploadSingleClip(liveVideoId.toString(), segmentIdx + liveVideoSeqNumber * 2, path,
                                     new PostTaskListener<Boolean>() {
@@ -313,8 +315,9 @@ public class RecorderCtrl
     }
 
     private void endLive() {
+        Log.e(TAG, "End live video! videoId:" + liveVideoId);
         Uploader.endVideo(liveVideoId.toString(), title,
-                videoClipDbHelper.getVideoClipsByName(readableDb, title).size(),
+                videoClipDbHelper.getAllVideoClipsVideoId(readableDb, liveVideoId).size(),
                 new PostTaskListener<Boolean>() {
             @Override
             void onPostTask(Boolean result) {
