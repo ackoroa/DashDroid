@@ -28,6 +28,20 @@ public class FileManager {
 		return directory + "/mpd_" + numbering;
 	}
 	
+	public static String getHLSFilePath(int videoId, String previousPath) {
+		String directory = rootDirectory + "/" + videoId;
+		int numbering = 0;
+		if(previousPath != null && !previousPath.equals("")) {
+			File f = new File(previousPath);
+			String name = f.getName();
+			
+			String[] splits = name.split("_");
+			numbering = Integer.parseInt(splits[1]) + 1;
+		}
+		
+		return directory + "/hls_" + numbering;
+	}
+	
 	public static String writeVideoFile(InputStream data, int videoId, int sequenceNum) throws IOException {
 	    String directory = rootDirectory + "/" + videoId;
 	    String filePath = directory + "/" + sequenceNum;

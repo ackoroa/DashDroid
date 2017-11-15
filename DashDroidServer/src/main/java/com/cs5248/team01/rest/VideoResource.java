@@ -203,13 +203,62 @@ public class VideoResource {
 			response = Response.status(500, e.getMessage());
 		}
 		
+		return getHLSHelper(videoId, "");
+	}
+	
+	@GET
+	@Path("{videoId}/HLS")
+	@Produces("application/x-mpegURL")
+	public Response getHLS(@PathParam("videoId") String videoId) {
+		return getHLSHelper(videoId, "");
+	}
+	
+	@GET
+	@Path("{videoId}/HLS/{postfix}")
+	@Produces("application/x-mpegurl")
+	public Response getHLSChild(@PathParam("videoId") String videoId, @PathParam("postfix") String postfix) {
+		return getHLSHelper(videoId, postfix);
+	}
+	
+	private Response getHLSHelper(String videoId, String postfix) {
+		logger.info("GET HLS video: " + videoId + " postfix: " + postfix);
+		ResponseBuilder response = Response.status(500, "unknown error");
+		try {
+			Video video = Video.getById(Integer.parseInt(videoId));
+			if(video == null) {
+				response = Response.status(404, "video: " + videoId + "not found");
+			}
+			else {
+				String path = video.getHLSPath();
+				if(path == null || path.equals("")) {
+					response = Response.status(404, "video does not have HLS");
+				}
+				else {
+					logger.debug("HLS Path: " + path);
+					
+					if(postfix != null && !postfix.equals(""))
+						path = path + "-" + postfix;
+					
+					logger.info("path: " + path);
+					File f = new File(path);
+					String fileName = f.getName() + ".m3u8";
+					response = Response.ok((Object)f);
+					//response.header("Content-Disposition", "inline; filename=" + fileName);
+					response.header("Content-Type", "application/x-mpegurl");
+				}
+			}
+		}
+		catch(Exception e) {
+			logger.error(org.apache.commons.lang.exception.ExceptionUtils.getStackTrace(e));
+			response = Response.status(500, e.getMessage());
+		}
+		
 		return response.build();
 	}
 	
-	
 	@GET
 	@Path("{videoId}/{representation}/{sequenceNo}")
-	@Produces("video/mp4")
+	@Produces("video/mp4,video/mp2t")
 	public Response getVideoSegment(
 				@PathParam("videoId") String videoId,
 				@PathParam("representation") String representation,
@@ -228,6 +277,13 @@ public class VideoResource {
 				String fileName = f.getName();
 				response = Response.ok((Object)f);
 				response.header("Content-Disposition", "inline; filename=" + fileName);
+				if(fileName.endsWith(".ts")) {
+					response.header("Content-type", "video/mp2t");
+				}
+				else {
+					response.header("Content-type", "video/mp4");
+				}
+				
 			}
 		} catch (Exception e) {
 			logger.error(org.apache.commons.lang.exception.ExceptionUtils.getStackTrace(e));
