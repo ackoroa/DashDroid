@@ -87,7 +87,8 @@ public class ViewUploadedActivity extends ActionBarActivity {
                         VideoInfo videoInfo = new VideoInfo();
                         videoInfo.setName((String) videoJson.get("name"));
                         videoInfo.setId((Integer) videoJson.get("id"));
-                        videoInfo.setSegments((Integer) videoJson.get("numberOfSegments"));
+                        videoInfo.setLastModified((String) videoJson.get("lastModifiedDateTime"));
+//                        videoInfo.setSegments((Integer) videoJson.get("numberOfSegments"));
                         videoInfo.setHasEnded((Boolean) videoJson.get("fullVideo"));
 
                         videoInfos.add(videoInfo);
@@ -111,7 +112,7 @@ public class ViewUploadedActivity extends ActionBarActivity {
 
         List<String> info = new ArrayList<>();
         for (VideoInfo vid : videoInfos) {
-            info.add(String.valueOf(vid.getId()) + " - " + String.valueOf(vid.getSegments()));
+            info.add(String.valueOf(vid.getId()) + " + " + vid.getLastModified());
         }
 
         adapter = new ArrayAdapter(this,

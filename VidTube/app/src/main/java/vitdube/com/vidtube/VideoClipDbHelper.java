@@ -104,6 +104,18 @@ public class VideoClipDbHelper extends SQLiteOpenHelper {
         return getVideoClipsFromCursor(cursor);
     }
 
+    public List<VideoClip> getVideoClipsByIncompleteUploadAndVideoName(SQLiteDatabase db, String videoName) {
+        Cursor cursor = db.rawQuery("SELECT * FROM " + VideoClipContract.VideoClip.TABLE_NAME
+                + " WHERE " + VideoClipContract.VideoClip.COLUMN_NAME_TOUPLOAD
+                + " = 1 "
+                + " AND " + VideoClipContract.VideoClip.COLUMN_NAME_UPLOADED
+                + " = 0"
+                + " AND " + VideoClipContract.VideoClip.COLUMN_NAME_TITLE
+                + " = " + videoName, null);
+
+        return getVideoClipsFromCursor(cursor);
+    }
+
     @Override
     public void onCreate(SQLiteDatabase db) {
         db.execSQL(SQL_DELETE_ENTRIES);

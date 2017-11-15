@@ -177,6 +177,8 @@ public class Uploader implements View.OnClickListener {
                 if (result.equals("-1")) {
                     updateButtonToUpdate();
                     Toast.makeText(context, "Failed to init new video...", Toast.LENGTH_SHORT).show();
+                    dbHelper.updateDBClipToUploadStatus(writableDb, videoName, false);
+                    dbHelper.updateDBClipUploadStatus(writableDb, videoName, false);
                     return;
                 }
                 setId(Integer.valueOf(result));
@@ -305,7 +307,7 @@ public class Uploader implements View.OnClickListener {
         List<VideoClip> clips = dbHelper.getVideoClipsByIncompleteUpload(writableDb);
 
         for (final VideoClip clip : clips) {
-            Log.i("Uploader", "Clip is:" + clip.getVideoId());
+            Log.i("Uploader", "Clip to re-upload is:" + clip.getVideoId());
             uploadSingleClip(String.valueOf(clip.getVideoId()),
                     clip.getChunkId(),
                     clip.getFilePath(),
@@ -313,6 +315,20 @@ public class Uploader implements View.OnClickListener {
                         @Override
                         void onPostTask(Boolean result) {
                             dbHelper.updateDBClipUploadStatus(writableDb, clip.getFilePath(), true);
+                            List<VideoClip> remainingClips =
+                            dbHelper.getVideoClipsByIncompleteUploadAndVideoName(readableDb, clip.getTitle());
+                            Toast.makeText(context, "Uploaded " + clip.getChunkId(), Toast.LENGTH_SHORT).show();
+                            if (remainingClips.size() < 1) {
+                                Integer total = dbHelper.getVideoClipsByName(readableDb, clip.getTitle()).size();
+                                endVideo(String.valueOf(clip.getVideoId()), clip.getTitle(), total, new PostTaskListener<Boolean>() {
+                                    @Override
+                                    void onPostTask(Boolean result) {
+                                        Toast.makeText(context, "Video " + clip.getTitle() + "finished upload.",
+                                                Toast.LENGTH_SHORT).show();
+                                        Log.i("Uploader", "Video " + clip.getTitle() + "ended.");
+                                    }
+                                });
+                            }
                         }
                     });
         }
